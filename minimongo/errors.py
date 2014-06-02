@@ -1,4 +1,8 @@
+"""Framework errors."""
+
 class ValidationError(Exception):
+    """Raised on data validation error."""
+
     def __init__(self, cls, name, value, msg=None):
         self.cls = cls
         self.name = name
@@ -14,4 +18,4 @@ class ValidationError(Exception):
 
 
 class StrictTypeError(ValidationError):
-    pass
+    """Raised on type error."""
