@@ -1,16 +1,24 @@
-from errors import ValidationError, StrictTypeError
+from .errors import ValidationError
+from .types import FieldType
 
-class Field:
+
+class Field(object):
+    """A field object defines how a document field behaves."""
+
     def __init__(self, typ, require=True, default=None, strict=True, index=False):
-        if typ in (str, unicode):
-            typ = basestring
-
-        self.typ = typ
+        """
+        Initialize a new field. typ is the type of the field and may be a FieldType of a built-in
+        Python type. require is a boolean that indicates whether or not the field is required.
+        default is the default value to be stored if the field's value is None. strict determines
+        whether or not type conversion and validation should occur during storage and retrieval of
+        the field. index indicates whether or not the field should be indexed.
+        """
+        self.typ = FieldType.create(typ)
         self.require = require
         self.default = default
         self.strict = strict
         self.index = index
-        self.validators = []
+        self.validators = [self.typ.validate]
 
     def __call__(field, name):
         @property
@@ -26,18 +34,27 @@ class Field:
         return setter
 
     def ensure(self, func):
+        """
+        Ensure the field value passes the provided validation function. The validation function
+        takes three arguments: the document, the field name, and the field value. It raises
+        ValidationError if validation failes.
+        """
         self.validators.append(func)
 
+    def encode(self, cls, name, value):
+        """Return the value encoded for storage in the database."""
+        if self.strict:
+            value = self.typ.encode(cls, name, value)
+        return value
+
+    def decode(self, cls, name, value):
+        """Return the value decoded from database storage."""
+        if self.strict:
+            value = self.typ.decode(cls, name, value)
+        return value
+
     def validate(self, cls, name, value):
-        typ = self.typ
-        if not (typ is None or isinstance(value, typ)) and self.strict:
-            try:
-                # TODO: implement explicit conversion routines between types
-                value = typ(value)
-            except (TypeError, Exception), e:
-                raise StrictTypeError(cls, name, value, e)
-
-
-        for func in self.validators:
-            if not func(value):
-                raise ValidationError(cls, name, value)
+        """Validate the field value. Raise ValidationError on failure."""
+        if self.strict:
+            for validator in self.validators:
+                validator(cls, name, value)
