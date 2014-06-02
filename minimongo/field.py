@@ -23,11 +23,13 @@ class Field(object):
     def __call__(field, name):
         @property
         def var(self):
-            return self._raw[name]
+            return field.decode(doc, name, self._raw[name])
 
         @var.setter
         def setter(self, value):
-            field.validate(self.__class__.__name__, name, value)
+            doc = self.__class__.__name__
+            value = field.encode(doc, name, value)
+            field.validate(doc, name, value)
             self._raw[name] = value
             self._dirty[name] = True
 
