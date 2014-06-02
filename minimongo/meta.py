@@ -1,23 +1,25 @@
+from .field import Field
 from collections import defaultdict
 
-from .field import Field
 
+class DocumentMeta(object):
+    """Metadata container for Document classes."""
 
-class DocMeta(object):
-    def __init__(self, cls, fields, meta):
+    def __init__(self, cls, attrs, meta):
         self.cls = cls
-        cls.__init__ = self.init_hook()
         self.fields = {}
-        self.opt = {}
+        self.options = {}
 
-        if fields:
-            if not hasattr(fields, '__getitem__'):
-                fields = vars(fields)
-            for name, field in fields.items():
-                if isinstance(field, Field):
-                    self.fields[name] = field
+        cls.__init__ = self.init_hook()
+
+        if attrs:
+            if not hasattr(attrs, '__getitem__'):
+                attrs = vars(attrs)
+            for name, attr in attrs.items():
+                if isinstance(attr, Field):
+                    self.fields[name] = attr
         if meta:
-            self.opt = vars(meta)
+            self.options = vars(meta)
 
         self.bind()
 
@@ -49,10 +51,10 @@ class DocMeta(object):
         return '<Meta ({})>'.format(self.cls.__name__)
 
 
-class DocBuilder(type):
+class DocumentBuilder(type):
+    """Metaclass for building document classes."""
     def __new__(meta, name, bases, attrs):
         Meta = attrs.pop('Meta', {})
-
         cls = type.__new__(meta, name, bases, attrs)
-        cls._meta = DocMeta(cls, attrs, Meta)
+        cls._meta = DocumentMeta(cls, attrs, Meta)
         return cls

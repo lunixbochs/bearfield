@@ -1,15 +1,9 @@
-from .meta import DocBuilder
+from .meta import DocumentBuilder
 from .value import Value
 
 
-class Document(Value):
-    __metaclass__ = DocBuilder
-
-    def _encode(self):
-        return self._raw
-
-    def _decode(self):
-        return self._raw
+class Document(object):
+    __metaclass__ = DocumentBuilder
 
     def find(self, *args, **kwargs):
         pass
