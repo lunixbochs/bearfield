@@ -1,4 +1,5 @@
+*.egg
+*.egg-info
 *.pyc
 *.sw?
-*.egg-info
 .venv
