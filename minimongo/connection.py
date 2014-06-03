@@ -46,6 +46,8 @@ class Connection(object):
 
     def __getitem__(self, name):
         """Return a collection from the connection's database."""
+        if not name:
+            return None
         return CollectionProxy(self, self.database[self.prefix + name])
 
     def autoreconnect(self, func):
