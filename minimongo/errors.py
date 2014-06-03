@@ -12,6 +12,10 @@ class DocumentError(Error):
     """Base class for all document related errors."""
 
 
+class OperationError(DocumentError):
+    """Raised when an operation fails for a document."""
+
+
 class FieldError(DocumentError):
     """Raised on field/value error."""
     brief = "invalid field value"
