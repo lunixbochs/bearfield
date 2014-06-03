@@ -33,7 +33,9 @@ class DocumentMeta(object):
         if not self._collection:
             self._collection = to_snake_case(cls.__name__)
 
-        if self._connection and '_id' not in fields:
+        self.subdocument = not bool(self._connection)
+
+        if not self.subdocument and '_id' not in fields:
             self.fields['_id'] = Field(ObjectId)
 
         self.bind_fields()
@@ -53,7 +55,7 @@ class DocumentMeta(object):
         __init__.name = parent.__name__
         __init__.hook = True
         __init__.parent = parent
-        self.cls.__init__ = __init__
+        meta.cls.__init__ = __init__
 
     def bind_fields(self):
         """Bind fields to the document class."""
