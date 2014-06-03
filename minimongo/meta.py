@@ -1,6 +1,5 @@
 """Meta functionality used for document creation."""
-from .connection import find_connection
-from .errors import DocumentError
+from .connection import Connection, get_connection
 from .field import Field
 from bson import ObjectId
 from collections import defaultdict
@@ -28,14 +27,13 @@ class DocumentMeta(object):
         if meta:
             self.options.update(vars(meta))
 
-        self._connection = self.options.pop('connection', None)
-        self._collection = self.options.pop('collection', None)
-        if not self._collection:
-            self._collection = to_snake_case(cls.__name__)
+        self.connection = self.options.pop('connection', None)
+        self.collection = self.options.pop('collection', None)
+        if not self.collection:
+            self.collection = to_snake_case(cls.__name__)
 
-        self.subdocument = not bool(self._connection)
-
-        if not self.subdocument and '_id' not in fields:
+        self.subdocument = not bool(self.connection)
+        if not self.subdocument and '_id' not in self.fields:
             self.fields['_id'] = Field(ObjectId)
 
         self.bind_fields()
@@ -66,17 +64,23 @@ class DocumentMeta(object):
 
         self.defaults = defaults
 
-    def get_connection(self):
-        """Return the connection associated with this document."""
-        if self._connection:
-            return find_connection(self._connection)
-        return None
+    def get_connection(self, connection=None):
+        """
+        Return the connection associated with this document. If connection is provided then it will
+        be used instead. This value may be the name of a connection or an actual connection object.
+        """
+        if connection:
+            if isinstance(connection, Connection):
+                return connection
+            else:
+                return get_connection(str(connection))
+        return get_connection(self.connection)
 
     def get_collection(self, connection=None):
         """Return the collection associated with this document."""
-        connection = connection or self.get_connection()
+        connection = self.get_connection(connection)
         if connection:
-            return connection[self._collection]
+            return connection[self.collection]
         return None
 
     def __repr__(self):
