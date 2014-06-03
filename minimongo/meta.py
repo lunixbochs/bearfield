@@ -61,7 +61,7 @@ class DocumentMeta(object):
         """Bind fields to the document class."""
         defaults = {}
         for name, field in self.fields.items():
-            setattr(self.cls, name, field(name))
+            setattr(self.cls, name, field(self.cls, name))
             defaults[name] = field.default
 
         self.defaults = defaults

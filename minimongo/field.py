@@ -1,4 +1,3 @@
-from .errors import ValidationError
 from .types import FieldType
 
 
@@ -20,7 +19,7 @@ class Field(object):
         self.index = index
         self.validators = [self.typ.validate]
 
-    def __call__(field, name):
+    def __call__(field, doc, name):
         @property
         def var(self):
             return field.decode(doc, name, self._raw[name])
