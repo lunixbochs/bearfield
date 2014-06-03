@@ -62,6 +62,11 @@ class Connection(object):
                 tries += 1
         return reconnect
 
+    def close(self):
+        """Close the connection."""
+        if self._client:
+            self._client.close()
+
 
 class CollectionProxy(object):
     """Proxy method calls to collections in order to handle AutoReconnect errors."""
