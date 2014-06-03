@@ -1,6 +1,6 @@
 """Define additional field types that require encodeing and/or decoding."""
 from datetime import date, datetime, time
-from errors import StrictTypeError, ValidationError
+from errors import EncodingError, ValidationError
 
 epoch = date(1970, 1, 1)
 registered_field_types = []
@@ -91,7 +91,7 @@ class BuiltinType(FieldType):
         try:
             return self.builtin(value)
         except (TypeError, ValueError) as e:
-            raise StrictTypeError(cls, name, value, e)
+            raise EncodingError(cls, name, value, e)
 
 
 class DateType(FieldType):
@@ -104,7 +104,7 @@ class DateType(FieldType):
         if is_date_obj(value):
             value = datetime.combine(value, time(0))
         if not is_datetime_obj(value):
-            raise StrictTypeError(cls, name, value)
+            raise EncodingError(cls, name, value)
         return value
 
     def decode(self, cls, name, value):
@@ -113,7 +113,7 @@ class DateType(FieldType):
             return value
         if is_datetime_obj(value):
             return value.date()
-        raise StrictTypeError(cls, name, value, "invalid type to decode")
+        raise EncodingError(cls, name, value, "invalid type to decode")
 
 
 class DateTimeType(FieldType):
@@ -126,13 +126,13 @@ class DateTimeType(FieldType):
         elif is_time_obj(value):
             value = datetime.combine(epoch, value)
         elif not is_datetime_obj(value):
-            raise StrictTypeError(cls, name, value)
+            raise EncodingError(cls, name, value)
         return value
 
     def decode(self, cls, name, value):
         """Return the datetime value for the stored value."""
         if not is_datetime_obj(value):
-            raise StrictTypeError(cls, name, value, "invalid type to decode")
+            raise EncodingError(cls, name, value, "invalid type to decode")
         return value
 
 
@@ -146,7 +146,7 @@ class TimeType(FieldType):
         if is_time_obj(value):
             value = datetime.combine(epoch, value)
         else:
-            raise StrictTypeError(cls, name, value)
+            raise EncodingError(cls, name, value)
         return value
 
     def decode(self, cls, name, value):
@@ -155,7 +155,7 @@ class TimeType(FieldType):
             return value
         if is_datetime_obj(value):
             return value.time()
-        raise StrictTypeError(cls, name, value, "invalid type to decode")
+        raise EncodingError(cls, name, value, "invalid type to decode")
 
 
 register_field_type(is_date_type, DateType)

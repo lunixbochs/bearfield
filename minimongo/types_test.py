@@ -124,8 +124,8 @@ class TestDateType(unittest.TestCase):
         today = date.today()
         test(now, datetime.combine(now.date(), time(0)))
         test(today, datetime.combine(today, time(0)))
-        self.assertRaises(errors.StrictTypeError, typ.encode, 'test', 'test', now.time())
-        self.assertRaises(errors.StrictTypeError, typ.encode, 'test', 'test', 36)
+        self.assertRaises(errors.EncodingError, typ.encode, 'test', 'test', now.time())
+        self.assertRaises(errors.EncodingError, typ.encode, 'test', 'test', 36)
 
     def test_decode(self):
         """DateType.decode"""
@@ -134,7 +134,7 @@ class TestDateType(unittest.TestCase):
         value = typ.decode('test', 'test', today)
         self.assertIsInstance(value, date, "returned value is not date")
         self.assertEqual(value, today.date(), "returned date value is incorrect")
-        self.assertRaises(errors.StrictTypeError, typ.decode, 'test', 'test', 'invalid')
+        self.assertRaises(errors.EncodingError, typ.decode, 'test', 'test', 'invalid')
 
     def test_create(self):
         """FieldType.create(date)"""
@@ -168,7 +168,7 @@ class TestDateTimeType(unittest.TestCase):
         value = typ.decode('test', 'test', now)
         self.assertIsInstance(value, datetime, "returned value is not datetime")
         self.assertEqual(now, value, "returned datetime value is incorrect")
-        self.assertRaises(errors.StrictTypeError, typ.decode, 'test', 'test', 'invalid')
+        self.assertRaises(errors.EncodingError, typ.decode, 'test', 'test', 'invalid')
 
     def test_create(self):
         """FieldType.create(datetime)"""
@@ -193,7 +193,7 @@ class TestTimeType(unittest.TestCase):
         want = datetime.combine(date(1970, 1, 1), nowtime)
         test(now, want)
         test(nowtime, want)
-        self.assertRaises(errors.StrictTypeError, typ.encode, 'test', 'test', 'invalid')
+        self.assertRaises(errors.EncodingError, typ.encode, 'test', 'test', 'invalid')
 
     def test_decode(self):
         """TimeType.decode"""
@@ -201,7 +201,7 @@ class TestTimeType(unittest.TestCase):
         nowtime = datetime.combine(date(1970, 1, 1), datetime.now().time())
         value = typ.decode('test', 'test', nowtime)
         self.assertIsInstance(value, time, "returned value it not time")
-        self.assertRaises(errors.StrictTypeError, typ.decode, 'test', 'test', 'invalid')
+        self.assertRaises(errors.EncodingError, typ.decode, 'test', 'test', 'invalid')
 
     def test_create(self):
         """FieldType.create(time)"""

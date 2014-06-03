@@ -18,7 +18,7 @@ class TestField(unittest.TestCase):
         value = field.encode('test', 'test', "12")
         self.assertEqual(value, 12, "encoded strict value is incorrect")
 
-        self.assertRaises(errors.StrictTypeError, field.encode, 'test', 'test', 'invalid')
+        self.assertRaises(errors.EncodingError, field.encode, 'test', 'test', 'invalid')
 
     def test_decode(self):
         """Field.decode"""
@@ -33,7 +33,7 @@ class TestField(unittest.TestCase):
         value = field.decode('test', 'test', midnight)
         self.assertEqual(value, today, "decoded strict value is incorrect")
 
-        self.assertRaises(errors.StrictTypeError, field.decode, 'test', 'test', 'invalid')
+        self.assertRaises(errors.EncodingError, field.decode, 'test', 'test', 'invalid')
 
     def test_validate(self):
         """Field.validate"""
