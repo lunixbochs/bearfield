@@ -4,10 +4,13 @@ from setuptools import setup, find_packages
 here = os.path.abspath(os.path.dirname(__file__))
 readme = os.path.join(here, 'README.md')
 
-requires = [
+install_requires = [
     'pymongo>=2.7.0',
 ]
-testing_extras = []
+setup_requires = [
+    "coverage>=3.7.0",
+    "nose>=1.3.0",
+]
 
 setup(
     name='minimongo',
@@ -30,7 +33,8 @@ setup(
     zip_safe=False,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
-    install_requires=requires,
-    tests_require=requires + testing_extras,
-    entry_points="",
+    install_requires=install_requires,
+    setup_requires=setup_requires,
+    test_suite = 'nose.collector',
+    entry_points='',
 )

@@ -2,4 +2,5 @@
 *.egg-info
 *.pyc
 *.sw?
+.coverage
 .venv
