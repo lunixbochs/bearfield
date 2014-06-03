@@ -8,7 +8,7 @@ connections = {}
 class Connection(object):
     """A lazy database connection."""
 
-    def __init__(self, uri, prefix=None, options=None):
+    def __init__(self, uri, prefix=None, **options):
         """
         Initialize the connection. The URI should be a full mongodb:// URI including the datbase
         name. The prefix is optional and is a string used to prefix all collection names. Options
@@ -16,7 +16,7 @@ class Connection(object):
         """
         self.uri = uri
         self.prefix = prefix or ''
-        self.options = options or {}
+        self.options = options
         self._client = None
         self._database = None
 
@@ -64,7 +64,7 @@ def initialize_connections(config):
             prefix = options.pop('prefix', None)
             if uri is None:
                 raise ConfigError("connection {} is missing uri".format(name))
-            connection = Connection(uri, prefix, options)
+            connection = Connection(uri, prefix, **options)
         else:
             connection = Connection(options)
         register_connection(name, connection)
