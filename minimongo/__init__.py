@@ -1,9 +1,14 @@
+from .connection import Connection, get_connection, register_connection, initialize_connections
 from .document import Document
 from .field import Field
-from .session import Session
+from bson import ObjectId
 
 __all__ = [
+    'Connection',
     'Document',
     'Field',
-    'Session',
+    'ObjectId',
+    'get_connection',
+    'initialize_connections',
+    'register_connection',
 ]

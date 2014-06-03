@@ -1,6 +1,6 @@
 """Define additional field types that require encodeing and/or decoding."""
 from datetime import date, datetime, time
-from errors import EncodingError, ValidationError
+from errors import EncodingError
 
 epoch = date(1970, 1, 1)
 registered_field_types = []

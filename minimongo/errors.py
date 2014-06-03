@@ -1,7 +1,8 @@
 """Framework errors."""
 
+
 class Error(Exception):
-    """Base error type.""" 
+    """Base error type."""
 
 
 class ConfigError(Error):
