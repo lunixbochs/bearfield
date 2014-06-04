@@ -1,6 +1,6 @@
 """Document and subdocument classes."""
 from .cursor import Cursor
-from .errors import OperationError
+from .errors import OperationError, ValidationError
 from .meta import DocumentBuilder
 from collections import defaultdict
 
@@ -110,7 +110,7 @@ class Document(object):
     @classmethod
     def _validate(cls, raw, update=False):
         """
-        Validate the raw document. Raise a DocumentError if validation fails. If the raw document
+        Validate the raw document. Raise a ValidationError if validation fails. If the raw document
         is an update document then update should be set to True.
         """
         if update:
@@ -127,7 +127,7 @@ class Document(object):
         if not update and required:
             doc = cls.__name__
             required = ', '.join(sorted(required))
-            raise DocumentError("{} is missing required fields: {}".format(doc, required))
+            raise ValidationError("{} is missing required fields: {}".format(doc, required))
 
     def save(self, connection=None, **options):
         """
