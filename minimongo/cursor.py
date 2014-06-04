@@ -41,6 +41,11 @@ class Cursor(object):
         criteria_chain['$and'].append(criteria)
         return Cursor(self.document, self.collection, criteria_chain, **self.options)
 
+    def remove(self):
+        """Remove the documents matched by this cursor."""
+        res = self.collection.remove(self.criteria)
+        return res.get('n', 0)
+
     def __iter__(self):
         """Return the cursor iterator."""
         return self
