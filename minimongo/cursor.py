@@ -29,8 +29,8 @@ class Cursor(object):
             criteria_chain = deepcopy(self.criteria)
         else:
             criteria_chain = {'$and': [deepcopy(self.criteria)]}
-        criteria_chain['$and'].append(self.criteria)
-        return Cursor(self, criteria_chain, self.connection, **self.options)
+        criteria_chain['$and'].append(criteria)
+        return Cursor(self.document, self.collection, criteria_chain, **self.options)
 
     def __iter__(self):
         """Return the cursor iterator."""
