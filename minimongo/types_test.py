@@ -219,9 +219,7 @@ class TestDocumentType(unittest.TestCase):
         """DocumentType.encode"""
         index = '12'
         name = 'the twelth'
-        value = self.Doc()
-        value.index = index
-        value.name = name
+        value = self.Doc(index=index, name=name)
 
         typ = types.DocumentType(self.Doc)
         raw = typ.encode('test', 'test', value)
