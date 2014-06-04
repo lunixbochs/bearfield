@@ -34,7 +34,7 @@ class DocumentMeta(object):
 
         self.subdocument = not bool(self.connection)
         if not self.subdocument and '_id' not in self.fields:
-            self.fields['_id'] = Field(ObjectId)
+            self.fields['_id'] = Field(ObjectId, require=False)
 
         self.bind_fields()
 
