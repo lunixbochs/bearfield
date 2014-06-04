@@ -26,6 +26,12 @@ def is_time_type(typ):
     return issubclass(typ, time)
 
 
+def is_document_type(obj):
+    """Return True if type is a Document."""
+    from .document import Document
+    return issubclass(obj, Document)
+
+
 def is_date_obj(obj):
     """Return True if obj is a date."""
     return isinstance(obj, date) and not isinstance(obj, datetime)
@@ -39,6 +45,12 @@ def is_datetime_obj(obj):
 def is_time_obj(obj):
     """Return True if obj is a time."""
     return isinstance(obj, time)
+
+
+def is_document_obj(obj):
+    """Return True if obj is a Document."""
+    from .document import Document
+    return isinstance(obj, Document)
 
 
 def register_field_type(check, field_type):
@@ -58,7 +70,7 @@ class FieldType(object):
             return typ
         for check, field_type in registered_field_types:
             if check(typ):
-                return field_type()
+                return field_type(typ)
         return BuiltinType(typ)
 
     def __init__(self, *args, **kwargs):
@@ -157,6 +169,31 @@ class TimeType(FieldType):
         raise EncodingError(cls, name, value, False)
 
 
+class DocumentType(FieldType):
+    """Support subdocuments."""
+
+    def __init__(self, document):
+        """Create a document type object with the given document class."""
+        self.document = document
+
+    def encode(self, cls, name, value):
+        """Return the value encoded as a raw subdocument."""
+        if is_document_obj(value):
+            return value._encode()
+        raise EncodingError(cls, name, value, True)
+
+    def decode(self, cls, name, value):
+        """Return the value decoded as a subdocument object."""
+        if hasattr(value, 'get'):
+            return self.document._decode(value)
+        raise EncodingError(cls, name, value, False)
+
+    def validate(self, cls, name, value):
+        """Raise ValidationError if the field fails to validate."""
+        self.document._validate(value)
+
+
 register_field_type(is_date_type, DateType)
 register_field_type(is_datetime_type, DateTimeType)
 register_field_type(is_time_type, TimeType)
+register_field_type(is_document_type, DocumentType)

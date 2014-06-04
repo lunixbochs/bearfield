@@ -1,7 +1,7 @@
 """Tests for the types module."""
 import unittest
 from datetime import date, datetime, time
-from minimongo import errors, types
+from minimongo import errors, types, Document, Field
 
 
 class ExampleType(types.FieldType):
@@ -207,3 +207,44 @@ class TestTimeType(unittest.TestCase):
         """FieldType.create(time)"""
         typ = types.FieldType.create(time)
         self.assertIsInstance(typ, types.TimeType)
+
+
+class TestDocumentType(unittest.TestCase):
+
+    class Doc(Document):
+        index = Field(int)
+        name = Field(str)
+
+    def test_encode(self):
+        """DocumentType.encode"""
+        index = '12'
+        name = 'the twelth'
+        value = self.Doc()
+        value.index = index
+        value.name = name
+
+        typ = types.DocumentType(self.Doc)
+        raw = typ.encode('test', 'test', value)
+        self.assertIsInstance(raw, dict, "returned value has incorrect type")
+        self.assertEqual(raw['index'], int(index), "returned value is incorrect")
+        self.assertEqual(raw['name'], str(name), "returned value is incorrect")
+        self.assertRaises(errors.EncodingError, typ.encode, 'test', 'test', 'invalid')
+
+    def test_decode(self):
+        """DocumentType.decode"""
+        index = 12
+        name = 'the twelth'
+        value = {'index': index, 'name': name}
+
+        typ = types.DocumentType(self.Doc)
+        doc = typ.decode('test', 'test', value)
+        self.assertIsInstance(doc, self.Doc, "returned value has incorrect type")
+        self.assertEqual(doc.index, index, "returned value is incorrect")
+        self.assertEqual(doc.name, name, "returned value is incorrect")
+        self.assertRaises(errors.EncodingError, typ.decode, 'test', 'test', 'invalid')
+
+    def test_validate(self):
+        """DocumentType.validate"""
+        value = {'index': 12}
+        typ = types.DocumentType(self.Doc)
+        self.assertRaises(errors.ValidationError, typ.validate, 'test', 'test', value)
