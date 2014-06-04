@@ -77,6 +77,17 @@ class Document(object):
         options.pop('new', None)
         return cls._decode(collection.find_and_modify(criteria, update, new=True, **options))
 
+    def _validate(self):
+        """Validate the document. Raise a DocumentError if validation fails."""
+        required = []
+        for name, field in self._meta.fields.iteritems():
+            if field.require and self._raw.get(name, None) is None:
+                required.append(name)
+        if required:
+            doc = self.__class__.__name__
+            required = ', '.join(sorted(required))
+            raise DocumentError("{} is missing required rfields: {}".format(doc, required))
+
     @property
     def _insertable(self):
         """Return the document as a dictionary suitable for inserting or saving."""
@@ -108,6 +119,7 @@ class Document(object):
         a full document update otherwise. Additional args are passed to pymongo's save().
         """
         collection = self._collection(connection, 'save')
+        self._validate()
         item = self._insertable
         options.pop('manipulate', None)
         self._id = collection.save(item, manipulate=True, **options)
@@ -121,6 +133,7 @@ class Document(object):
         insert().
         """
         collection = self._collection(connection, 'insert')
+        self._validate()
         item = self._insertable
         options.pop('manipulate', None)
         self._id = collection.insert(item, manipulate=True, **options)
