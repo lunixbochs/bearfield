@@ -79,6 +79,10 @@ class Document(object):
         options.pop('new', None)
         return cls._decode(collection.find_and_modify(criteria, update, new=True, **options))
 
+    def __init__(self, *args, **kwargs):
+        """Initialize the document with values."""
+        self._attrs.update(kwargs)
+
     def _encode(self, update=False):
         """
         Return the document as a dictionary suitable for saving. If update is
