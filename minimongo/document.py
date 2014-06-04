@@ -34,18 +34,19 @@ class Document(object):
         return doc
 
     @classmethod
-    def _validate(cls, name, connection):
+    def _collection(cls, connection, method):
         """
-        Validate an operation against the provided connection. Return a collectionf or operating
-        against.
+        Return a collection to operate against. Raise an OperationError if the document is a
+        subdocument or is not associated with a collection. The method param should be the name of
+        the method on the document that is being called.
         """
         if cls._meta.subdocument:
             raise OperationError(
-                "{}.{}(): invalid subdocument operation".format(cls.__name__, name))
+                "{}.{}(): invalid subdocument operation".format(cls.__name__, method))
         collection = cls._meta.get_collection(connection)
         if not collection:
             raise OperationError(
-                "{}.{}(): no collection associated with document".format(cls.__name__, name))
+                "{}.{}(): no collection associated with document".format(cls.__name__, method))
         return collection
 
     @classmethod
@@ -54,7 +55,7 @@ class Document(object):
         Query the database for documents. Return a cursor for further refining or iterating over
         the results. Additional args are passed to pymongo's find().
         """
-        collection = cls._validate(connection)
+        collection = cls._collection(connection, 'find')
         return Cursor(cls, collection, criteria, **options)
 
     @classmethod
@@ -63,7 +64,7 @@ class Document(object):
         Query the database for a single document. Return the document or None if not found.
         Additional args are passed to pymongo's find().
         """
-        collection = cls._validate(connection)
+        collection = cls._collection(connection, 'find_one')
         return cls._decode(collection.find_one(criteria, **options))
 
     @classmethod
@@ -72,7 +73,7 @@ class Document(object):
         Query the database for a document, update it, then return the new document. Additional args
         are passed to pymongo's find_and_modify().
         """
-        collection = cls._validate(connection)
+        collection = cls._collection(connection, 'find_and_modify')
         options.pop('new', None)
         return cls._decode(collection.find_and_modify(criteria, update, new=True, **options))
 
@@ -106,7 +107,7 @@ class Document(object):
         Save the model to the database. Effectively performs an insert if the _id field is None and
         a full document update otherwise. Additional args are passed to pymongo's save().
         """
-        collection = self._validate(connection)
+        collection = self._collection(connection, 'save')
         item = self._insertable
         options.pop('manipulate', None)
         self._id = collection.save(item, manipulate=True, **options)
@@ -119,7 +120,7 @@ class Document(object):
         insert the same document into multiple databases. Additional args are passed to pymongo's
         insert().
         """
-        collection = self._validate(connection)
+        collection = self._collection(connection, 'insert')
         item = self._insertable
         options.pop('manipulate', None)
         self._id = collection.insert(item, manipulate=True, **options)
@@ -133,7 +134,7 @@ class Document(object):
         no _id is set. Additional args are passed to pymongo's update(). Return True if an update
         was performed or False if no update was needed.
         """
-        collection = self._validate(connection)
+        collection = self._collection(connection, 'update')
         item = update or self._updatable
         if item:
             options.pop('multi', None)
@@ -146,7 +147,7 @@ class Document(object):
         Remove the document from the database. Additional args are passed to pymongo's remove().
         Return True if the document was removed or False if there was nothing to remove.
         """
-        collection = self._validate(connection)
+        collection = self._collection(connection, 'remove')
         if self._id:
             res = collection.remove(self._id)
             return res.get('n', 0) > 0
