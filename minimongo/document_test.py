@@ -129,6 +129,9 @@ class TestDocument(unittest.TestCase):
         count = len(docs)
         self.assertEqual(count, 3, "find() returned incorrect number of documents")
 
+        docs = list(docs)
+        self.assertEqual(len(docs), 3, "document list has incorrect length")
+
         criteria = {'index': {'$gt': 2}}
         docs = self.Document.find(criteria)
         count = len(docs)

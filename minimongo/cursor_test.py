@@ -42,6 +42,9 @@ class TestCursor(unittest.TestCase):
         criteria1 = {'index': 1}
         criteria2 = {'name': 'first'}
         criteria3 = {'$and': [criteria1, criteria2]}
+        criteria4 = {'index': {'$lt': 2}}
+        criteria5 = {'$and': [criteria1, criteria2, criteria4]}
+
         cur = cursor.Cursor(self.DocumentMock(), self.collection, criteria1)
         self.assertEqual(
             cur.criteria, criteria1,
@@ -50,6 +53,10 @@ class TestCursor(unittest.TestCase):
         self.assertEqual(
             cur.criteria, criteria3,
             "second cursor has invalid criteria {} != {}".format(cur.criteria, criteria3))
+        cur = cur.find(criteria4)
+        self.assertEqual(
+            cur.criteria, criteria5,
+            "third cursor has invalid criteria {} != {}".format(cur.criteria, criteria3))
 
     def test_iter(self):
         """Cursor.__iter__"""
