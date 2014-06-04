@@ -107,7 +107,8 @@ class Document(object):
                     raw[name] = field.encode(self.__class__, name, value)
         return raw
 
-    def _validate(self, raw, update=False):
+    @classmethod
+    def _validate(cls, raw, update=False):
         """
         Validate the raw document. Raise a DocumentError if validation fails. If the raw document
         is an update document then update should be set to True.
@@ -115,16 +116,16 @@ class Document(object):
         if update:
             raw = update.get('$set', {})
         required = []
-        for name, field in self._meta.fields.iteritems():
+        for name, field in cls._meta.fields.iteritems():
             value = raw.get(name)
             if value is None:
                 if field.require:
                     required.append(name)
             else:
-                field.validate(self.__class__, name, value)
+                field.validate(cls, name, value)
 
         if not update and required:
-            doc = self.__class__.__name__
+            doc = cls.__name__
             required = ', '.join(sorted(required))
             raise DocumentError("{} is missing required fields: {}".format(doc, required))
 
