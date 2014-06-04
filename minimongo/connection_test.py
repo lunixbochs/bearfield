@@ -78,6 +78,8 @@ class TestConnectionProxy(unittest.TestCase):
         self.con = connection.Connection(uri, prefix=self.prefix)
 
     def tearDown(self):
+        name = self.con.database.name
+        self.con.client.drop_database(name)
         self.con.close()
 
     def test_attribute(self):
