@@ -31,6 +31,7 @@ class TestDocument(unittest.TestCase):
             connection = 'test'
         index = Field(int)
         name = Field(str)
+        optional = Field(str, require=False)
 
     class DatedDocument(document.Document): 
         class Meta:
@@ -85,10 +86,13 @@ class TestDocument(unittest.TestCase):
     def test_update(self):
         """Document.update"""
         raw = {'index': 5, 'name': 'the fifth'}
-        doc = self.Document(index=5, name='the fourth')
+        doc = self.Document(index=5, name='the fourth', optional='yes')
+        self.assertRaises(errors.OperationError, doc.update)
         doc.save()
         doc.name = 'the fifth'
-        doc.update()
+        doc.optional = None
+        self.assertTrue(doc.update(), "operational update did not return true")
+        self.assertFalse(doc.update(), "noop update did not return false")
         self.validate_save('document', doc, raw)
 
     def test_remove(self):
@@ -164,6 +168,8 @@ class TestDocument(unittest.TestCase):
             self.Document._meta.subdocument, "document incorrectly marked as subdocument")
         self.assertTrue(
             self.SubDocument._meta.subdocument, "subdocument incorrectly marked as document")
+        self.assertRaises(
+            errors.OperationError, self.SubDocument.find, "subdocument does not error on find")
 
         class TopDocument(document.Document):
             class Meta:
@@ -179,5 +185,12 @@ class TestDocument(unittest.TestCase):
         self.assertEqual(doc._encode()['sub'], raw['sub'], "returned subdocument is incorrect")
         self.validate_save('top_document', doc, raw)
 
-    def test_collection(self):
-        """Document._meta.collection"""
+    def test_meta_get_collection(self):
+        """Document._meta.get_collection"""
+        collection = self.OtherDocument._meta.get_collection()
+        self.assertEqual(collection.name, 'other', "returned incorrect collection")
+
+    def test_meta_get_connection(self):
+        """Document._meta.get_connection"""
+        con = self.Document._meta.get_connection('test')
+        self.assertEqual(con, self.con, "returned incorrect connection")

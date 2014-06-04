@@ -168,7 +168,7 @@ class Document(object):
         was performed or False if no update was needed.
         """
         if not self._id:
-            raise DocumentError("unable to update document without an _id")
+            raise OperationError("unable to update document without an _id")
         collection = self._collection(connection, 'update')
         update = update or self._encode(True)
         self._validate(update.get('$set', {}), True)
@@ -176,6 +176,7 @@ class Document(object):
             options.pop('multi', None)
             self._attrs = collection.find_and_modify(
                 {'_id': self._id}, update, multi=False, **options)
+            self._dirty = defaultdict(bool)
             return True
         return False
 
