@@ -23,6 +23,15 @@ class Cursor(object):
         """Return the connection for the cursor."""
         return self.collection._connection
 
+    @property
+    def pymongo(self):
+        """Return the pymongo cursor which underlies this object."""
+        if not getattr(self, '_pymongo_cursor', None):
+            print("criteria: {}".format(self.criteria))
+            print("collection: {}".format(self.collection.name))
+            self._pymongo_cursor = self.collection.find(self.criteria, **self.options)
+        return self._pymongo_cursor
+
     def find(self, criteria):
         """Refine the cursor's scope with additional criteria. Return a new cursor."""
         if len(self.criteria) == 1 and '$and' in self.criteria:
@@ -34,20 +43,13 @@ class Cursor(object):
 
     def __iter__(self):
         """Return the cursor iterator."""
-        return CursorIterator(self)
+        return self
 
-
-class CursorIterator(object):
-    """Iterate over cursor results."""
-
-    def __init__(self, cursor):
-        """Initialize the cursor iterator."""
-        self.document = cursor.document
-        self.connection = cursor.connection
-        self.pymongo_cursor = cursor.collection.find(cursor.criteria, **cursor.options)
+    def __len__(self):
+        return self.pymongo.count()
 
     def next(self):
         """Return the next item in the iterator."""
         def decode_next():
-            return self.document._decode(self.pymongo_cursor.next())
+            return self.document._decode(self.pymongo.next())
         return self.connection.autoreconnect(decode_next)()

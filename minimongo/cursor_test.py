@@ -55,4 +55,4 @@ class TestCursor(unittest.TestCase):
         """Cursor.__iter__"""
         cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1})
         it = cur.__iter__()
-        self.assertIsInstance(it, cursor.CursorIterator, "returned value is not a CursorIterator")
+        self.assertIsInstance(it, cursor.Cursor, "returned value has invalid type")
