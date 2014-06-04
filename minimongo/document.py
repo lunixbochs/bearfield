@@ -23,14 +23,16 @@ class Document(object):
     __metaclass__ = DocumentBuilder
 
     @classmethod
-    def _decode(cls, item):
+    def _decode(cls, raw):
         """Return a document decoded from a MongoDB record."""
-        if item is None:
+        if raw is None:
             return None
         doc = cls()
-        for key, value in item.iteritems():
-            if key in cls._meta.fields:
-                setattr(doc, key, value)
+        for name, field in cls._meta.fields.iteritems():
+            value = raw.get(name)
+            if value is not None:
+                value = field.decode(cls, name, value)
+            doc._attrs[name] = value
         return doc
 
     @classmethod
@@ -77,41 +79,54 @@ class Document(object):
         options.pop('new', None)
         return cls._decode(collection.find_and_modify(criteria, update, new=True, **options))
 
-    def _validate(self):
-        """Validate the document. Raise a DocumentError if validation fails."""
+    def _encode(self, update=False):
+        """
+        Return the document as a dictionary suitable for saving. If update is
+        True then an update document is returned.
+        """
+        raw = {}
+        if update:
+            sets = {}
+            unsets = {}
+            for name, field in self._meta.fields.iteritems():
+                if not self._dirty.get(name, False):
+                    continue
+                value = getattr(self, name, None)
+                if value is None:
+                    unsets[name] = ""
+                else:
+                    sets[name] = field.encode(self.__class__, name, value)
+            if sets:
+                raw['$set'] = sets
+            if unsets:
+                raw['$unset'] = unsets
+        else:
+            for name, field in self._meta.fields.iteritems():
+                value = getattr(self, name, None)
+                if value is not None:
+                    raw[name] = field.encode(self.__class__, name, value)
+        return raw
+
+    def _validate(self, raw, update=False):
+        """
+        Validate the raw document. Raise a DocumentError if validation fails. If the raw document
+        is an update document then update should be set to True.
+        """
+        if update:
+            raw = update.get('$set', {})
         required = []
         for name, field in self._meta.fields.iteritems():
-            if field.require and self._raw.get(name, None) is None:
-                required.append(name)
-        if required:
+            value = raw.get(name)
+            if value is None:
+                if field.require:
+                    required.append(name)
+            else:
+                field.validate(self.__class__, name, value)
+
+        if not update and required:
             doc = self.__class__.__name__
             required = ', '.join(sorted(required))
-            raise DocumentError("{} is missing required rfields: {}".format(doc, required))
-
-    @property
-    def _insertable(self):
-        """Return the document as a dictionary suitable for inserting or saving."""
-        return {k: v for k, v in self._raw.iteritems() if v is not None}
-
-    @property
-    def _updatable(self):
-        """Return the document as a dictionary suitable for updating."""
-        set_items = {}
-        unset_items = {}
-        for key, dirty in self._dirty.iteritems():
-            if not dirty:
-                continue
-            value = self._raw.get(key)
-            if value is None:
-                unset_items[key] = ""
-            else:
-                set_items[key] = value
-        update = {}
-        if set_items:
-            update['$set'] = set_items
-        if unset_items:
-            update['$unset'] = unset_items
-        return update
+            raise DocumentError("{} is missing required fields: {}".format(doc, required))
 
     def save(self, connection=None, **options):
         """
@@ -119,10 +134,10 @@ class Document(object):
         a full document update otherwise. Additional args are passed to pymongo's save().
         """
         collection = self._collection(connection, 'save')
-        self._validate()
-        item = self._insertable
+        raw = self._encode()
+        self._validate(raw)
         options.pop('manipulate', None)
-        self._id = collection.save(item, manipulate=True, **options)
+        self._id = collection.save(raw, manipulate=True, **options)
         self._dirty = defaultdict(bool)
 
     def insert(self, connection=None, **options):
@@ -133,10 +148,10 @@ class Document(object):
         insert().
         """
         collection = self._collection(connection, 'insert')
-        self._validate()
-        item = self._insertable
+        raw = self._encode()
+        self._validate(raw)
         options.pop('manipulate', None)
-        self._id = collection.insert(item, manipulate=True, **options)
+        self._id = collection.insert(raw, manipulate=True, **options)
         self._dirty = defaultdict(bool)
 
     def update(self, update=None, connection=None, **options):
@@ -148,10 +163,12 @@ class Document(object):
         was performed or False if no update was needed.
         """
         collection = self._collection(connection, 'update')
-        item = update or self._updatable
-        if item:
+        update = update or self._encode(True)
+        self._validate(update.get('$set', {}), False)
+        if update:
             options.pop('multi', None)
-            self._raw = collection.find_and_update({'_id': self._id}, item, multi=False, **options)
+            self._attrs = collection.find_and_update(
+                {'_id': self._id}, udpate, multi=False, **options)
             return True
         return False
 
