@@ -118,7 +118,7 @@ class Document(object):
         is an update document then update should be set to True.
         """
         if update:
-            raw = update.get('$set', {})
+            raw = raw.get('$set', {})
         required = []
         for name, field in cls._meta.fields.iteritems():
             value = raw.get(name)
@@ -167,13 +167,15 @@ class Document(object):
         no _id is set. Additional args are passed to pymongo's update(). Return True if an update
         was performed or False if no update was needed.
         """
+        if not self._id:
+            raise DocumentError("unable to update document without an _id")
         collection = self._collection(connection, 'update')
         update = update or self._encode(True)
-        self._validate(update.get('$set', {}), False)
+        self._validate(update.get('$set', {}), True)
         if update:
             options.pop('multi', None)
-            self._attrs = collection.find_and_update(
-                {'_id': self._id}, udpate, multi=False, **options)
+            self._attrs = collection.find_and_modify(
+                {'_id': self._id}, update, multi=False, **options)
             return True
         return False
 
