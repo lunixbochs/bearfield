@@ -162,8 +162,6 @@ class TimeType(FieldType):
 
     def decode(self, cls, name, value):
         """Return the time value from the stored datetime."""
-        if is_time_obj(value):
-            return value
         if is_datetime_obj(value):
             return value.time()
         raise EncodingError(cls, name, value, False)

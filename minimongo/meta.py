@@ -18,8 +18,6 @@ class DocumentMeta(object):
         self.bind_init()
 
         if attrs:
-            if not hasattr(attrs, '__getitem__'):
-                attrs = vars(attrs)
             for name, attr in attrs.items():
                 if isinstance(attr, Field):
                     self.fields[name] = attr
