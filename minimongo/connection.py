@@ -109,9 +109,11 @@ def initialize_connections(config):
         if isinstance(options, dict):
             uri = options.pop('uri', None)
             prefix = options.pop('prefix', None)
-            if uri is None:
+            if not uri:
                 raise ConfigError("connection {} is missing uri".format(name))
             connection = Connection(uri, prefix, **options)
         else:
+            if not options:
+                raise ConfigError("connection {} is missing uri".format(name))
             connection = Connection(options)
         register_connection(name, connection)

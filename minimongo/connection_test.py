@@ -1,6 +1,6 @@
 """Tests for the connection module."""
 import unittest
-from minimongo import connection
+from minimongo import connection, errors
 from pymongo import MongoClient
 from pymongo.errors import AutoReconnect
 
@@ -148,6 +148,11 @@ class TestFunctions(unittest.TestCase):
             self.assertTrue(con2.client.alive(), "con2 is not alive")
             self.assertEqual(con2.prefix, prefix2, "con2 prefix is incorrect")
             self.assertEqual(con2.database.name, "test2", "con2 database is incorrect")
+
+            self.assertRaises(
+                errors.ConfigError, connection.initialize_connections, {'broken': ''})
+            self.assertRaises(
+                errors.ConfigError, connection.initialize_connections, {'broken': {'uri': ''}})
         finally:
             for name, con in connection.connections.iteritems():
                 con.close()
