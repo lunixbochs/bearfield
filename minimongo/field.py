@@ -27,7 +27,7 @@ class Field(object):
         @var.setter
         def setter(self, value):
             self._attrs[name] = value
-            self._dirty[name] = True
+            self._dirty.add(name)
 
         return setter
 

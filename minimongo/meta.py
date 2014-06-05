@@ -45,7 +45,7 @@ class DocumentMeta(object):
 
         def __init__(self, *args, **kwargs):
             self._attrs = meta.defaults.copy()
-            self._dirty = defaultdict(bool)
+            self._dirty = set()
             return parent(self, *args, **kwargs)
 
         __init__.name = parent.__name__

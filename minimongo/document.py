@@ -115,7 +115,7 @@ class Document(object):
             sets = {}
             unsets = {}
             for name, field in self._meta.fields.iteritems():
-                if not self._dirty.get(name, False):
+                if name not in self._dirty:
                     continue
                 value = getattr(self, name, None)
                 if value is None:
@@ -143,7 +143,7 @@ class Document(object):
         self._validate(raw)
         options.pop('manipulate', None)
         self._id = collection.save(raw, manipulate=True, **options)
-        self._dirty = defaultdict(bool)
+        self._dirty = set()
 
     def insert(self, connection=None, **options):
         """
@@ -157,7 +157,7 @@ class Document(object):
         self._validate(raw)
         options.pop('manipulate', None)
         self._id = collection.insert(raw, manipulate=True, **options)
-        self._dirty = defaultdict(bool)
+        self._dirty = set()
 
     def update(self, update=None, connection=None, **options):
         """
@@ -176,7 +176,7 @@ class Document(object):
             options.pop('multi', None)
             self._attrs = collection.find_and_modify(
                 {'_id': self._id}, update, multi=False, **options)
-            self._dirty = defaultdict(bool)
+            self._dirty = set()
             return True
         return False
 
