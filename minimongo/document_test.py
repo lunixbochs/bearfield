@@ -197,3 +197,5 @@ class TestDocument(unittest.TestCase):
         """Document._meta.get_connection"""
         con = self.Document._meta.get_connection('test')
         self.assertEqual(con, self.con, "returned incorrect connection")
+        con = self.Document._meta.get_connection(self.con)
+        self.assertEqual(con, self.con, "returned incorrect connection")
