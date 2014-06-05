@@ -53,12 +53,8 @@ class Document(object):
         if raw is None:
             return None
         doc = cls()
+        doc._raw = raw.copy()
         doc._partial = cls._make_partial(fields)
-        for name, field in cls._fields(doc._partial).iteritems():
-            value = raw.get(name)
-            if value is not None:
-                value = field.decode(cls, name, value)
-            doc._attrs[name] = value
         return doc
 
     @classmethod
@@ -152,7 +148,7 @@ class Document(object):
             for name, field in self._fields(self._partial).iteritems():
                 if name not in self._dirty:
                     continue
-                value = getattr(self, name, None)
+                value = self._attrs.get(name)
                 if value is None:
                     unsets[name] = ""
                 else:
@@ -163,10 +159,25 @@ class Document(object):
                 raw['$unset'] = unsets
         else:
             for name, field in self._fields(self._partial).iteritems():
-                value = getattr(self, name, None)
+                if name in self._attrs:
+                    value = self._attrs[name]
+                    if value is not None:
+                        value = field.encode(self.__class__, name, value)
+                else:
+                    value = self._raw.get(name)
                 if value is not None:
-                    raw[name] = field.encode(self.__class__, name, value)
+                    raw[name] = value
         return raw
+
+    def _reset(self, raw, update=False):
+        """Reset internal field storage using the raw document."""
+        if update:
+            unsets = {k: None for k in raw.get('$unset', {}).iteritems()}
+            raw = raw.get('$set', {})
+            raw.update(unsets)
+        self._raw.update(raw)
+        self._attrs = {}
+        self._dirty = set()
 
     def save(self, connection=None, **options):
         """
@@ -180,7 +191,7 @@ class Document(object):
         self._validate(raw, self._partial)
         options.pop('manipulate', None)
         self._id = collection.save(raw, manipulate=True, **options)
-        self._dirty = set()
+        self._reset(raw)
 
     def insert(self, connection=None, **options):
         """
@@ -194,7 +205,7 @@ class Document(object):
         self._validate(raw, self._partial)
         options.pop('manipulate', None)
         self._id = collection.insert(raw, manipulate=True, **options)
-        self._dirty = set()
+        self._reset(raw)
 
     def update(self, update=None, connection=None, **options):
         """
@@ -207,6 +218,7 @@ class Document(object):
         if not self._id:
             raise OperationError("unable to update document without an _id")
         collection = self._collection(connection, 'update')
+        reset = not bool(update)
         update = update or self._encode(True)
         self._validate(update.get('$set', {}), self._partial, True)
         if update:
@@ -214,7 +226,8 @@ class Document(object):
             options.pop('fields', None)
             self._attrs = collection.find_and_modify(
                 {'_id': self._id}, update, fields=self._partial, multi=False, **options)
-            self._dirty = set()
+            if reset:
+                self._reset(update, True)
             return True
         return False
 

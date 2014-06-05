@@ -200,6 +200,21 @@ class TestDocument(unittest.TestCase):
         con = self.Document._meta.get_connection(self.con)
         self.assertEqual(con, self.con, "returned incorrect connection")
 
+    def test_defaults(self):
+        """Document defaults"""
+        class Defaults(document.Document):
+            class Meta:
+                connection = 'test'
+            index = Field(int, default="12")
+            name = Field(str)
+
+        doc = Defaults()
+        self.assertEqual(doc.index, 12, "attribute value is incorrect")
+        self.assertIsNone(doc.name, "attribute value is incorrect")
+        raw = doc._encode()
+        self.assertEqual(raw.get('index'), 12, "encoded value is incorrect")
+        self.assertIsNone(raw.get('name'), "encoded value is incorrect")
+
 
 class TestPartialDocument(unittest.TestCase):
     """Test partial Document objects."""

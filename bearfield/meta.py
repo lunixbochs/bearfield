@@ -44,7 +44,8 @@ class DocumentMeta(object):
             parent = parent.parent
 
         def __init__(self, *args, **kwargs):
-            self._attrs = meta.defaults.copy()
+            self._raw =  meta.defaults.copy()
+            self._attrs = {}
             self._dirty = set()
             self._partial = None
             return parent(self, *args, **kwargs)
@@ -59,7 +60,11 @@ class DocumentMeta(object):
         defaults = {}
         for name, field in self.fields.items():
             setattr(self.cls, name, field(self.cls, name))
-            defaults[name] = field.default
+            default = field.default
+            if default is not None:
+                default = field.encode(self.cls, name, field.default)
+                field.validate(self.cls, name, default)
+            defaults[name] = default
 
         self.defaults = defaults
 

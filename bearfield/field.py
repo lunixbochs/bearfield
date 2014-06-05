@@ -1,3 +1,4 @@
+from .errors import EncodingError
 from .types import FieldType
 
 
@@ -21,7 +22,15 @@ class Field(object):
     def __call__(field, doc, name):
         @property
         def var(self):
-            return self._attrs.get(name)
+            if name not in self._attrs:
+                value = self._raw.get(name)
+                if value is not None:
+                    try:
+                        value = field.decode(self.__class__, name, value)
+                    except EncodingError as e:
+                        raise TypeError(e)
+                self._attrs[name] = value
+            return self._attrs[name]
 
         @var.setter
         def setter(self, value):
