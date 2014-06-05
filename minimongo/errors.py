@@ -48,3 +48,7 @@ class EncodingError(DocumentError):
         if message:
             errormsg = "{}: {}".format(errormsg, message)
         super(EncodingError, self).__init__(errormsg, document, field, value)
+
+
+class QueryError(Error):
+    """Raised on query error."""
