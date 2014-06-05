@@ -34,7 +34,7 @@ class Document(object):
     def _make_criteria(cls, query):
         """Return a criteria dict for a query."""
         if isinstance(query, Query):
-            query = Query(query).encode(self)
+            query = query.encode(cls)
         return query
 
     @classmethod
