@@ -6,6 +6,12 @@ epoch = date(1970, 1, 1)
 registered_field_types = []
 
 
+def is_type(cls, typ):
+    if not isinstance(cls, type):
+        return False
+    return issubclass(cls, typ)
+
+
 def is_field_type(typ):
     """Return True if the type looks like a FieldType."""
     return isinstance(typ, FieldType)
@@ -13,31 +19,28 @@ def is_field_type(typ):
 
 def is_date_type(typ):
     """Return True if type is a date."""
-    return issubclass(typ, date) and not issubclass(typ, datetime)
+    return is_type(typ, date) and not is_type(typ, datetime)
 
 
 def is_datetime_type(typ):
     """Return True if type is a datetime."""
-    return issubclass(typ, datetime)
+    return is_type(typ, datetime)
 
 
 def is_time_type(typ):
     """Return True if type is a time."""
-    return issubclass(typ, time)
+    return is_type(typ, time)
 
 
 def is_document_type(typ):
     """Return True if type is a Document."""
     from .document import Document
-    return issubclass(typ, Document)
+    return is_type(typ, Document)
 
 
 def is_list_type(typ):
     """Return True if obj is a list or tuple."""
-    try:
-        return issubclass(typ, list) or issubclass(typ, tuple)
-    except TypeError:
-        return False
+    return is_type(typ, list) or is_type(typ, tuple)
 
 
 def is_date_obj(obj):
