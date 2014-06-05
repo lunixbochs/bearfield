@@ -63,3 +63,10 @@ class TestCursor(unittest.TestCase):
         cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1})
         it = cur.__iter__()
         self.assertIsInstance(it, cursor.Cursor, "returned value has invalid type")
+
+    def test_close(self):
+        """Cursor.close"""
+        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1})
+        cur.close()
+        len(cur)
+        cur.close()

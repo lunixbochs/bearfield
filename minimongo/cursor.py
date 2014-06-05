@@ -56,3 +56,9 @@ class Cursor(object):
         def decode_next():
             return self.document._decode(self.pymongo.next())
         return self.connection.autoreconnect(decode_next)()
+
+    def close(self):
+        """Explicitly close the cursor."""
+        if getattr(self, '_pymongo_cursor', None):
+            self._pymongo_cursor.close()
+            self._pymongo_cursor = None
