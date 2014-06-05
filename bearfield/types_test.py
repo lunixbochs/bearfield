@@ -84,6 +84,18 @@ class TestFieldType(unittest.TestCase):
         typ = types.FieldType.create(date)
         self.assertIsInstance(typ, types.DateType, "does not return DateType for date")
 
+    def test_encode(self):
+        """FieldType.encode"""
+        typ = types.FieldType()
+        value = "valid value"
+        self.assertEqual(typ.encode('test', 'test', value), value, "does not pass through values")
+
+    def test_decode(self):
+        """FieldType.decode"""
+        typ = types.FieldType()
+        value = "valid value"
+        self.assertEqual(typ.decode('test', 'test', value), value, "does not pass through values")
+
 
 class TestBuiltinType(unittest.TestCase):
     """Test the BuiltinType class."""

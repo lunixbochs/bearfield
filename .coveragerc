@@ -1,3 +1,2 @@
 [run]
-branch = True
 omit = */bson*,*/ctypes*,*/hmac*,*/pymongo*,*/uuid*

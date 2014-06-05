@@ -1,7 +1,7 @@
 """Test document module."""
 import unittest
 from datetime import datetime
-from bearfield import connection, document, errors, Field
+from bearfield import connection, document, errors, Field, Q
 
 uri = 'mongodb://localhost/test'
 
@@ -151,7 +151,8 @@ class TestDocument(unittest.TestCase):
         doc = self.Document.find_one()
         self.assertIn(doc._id, {doc1._id, doc2._id}, "returned incorrect document")
 
-        doc = self.Document.find_one({'name': 'the second'})
+        q = Q({'name': 'the second'})
+        doc = self.Document.find_one(q)
         self.assertEqual(doc._id, doc1._id, "returned incorrect document")
 
     def test_find_and_modify(self):
