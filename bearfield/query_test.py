@@ -37,9 +37,14 @@ class TestQuery(unittest.TestCase):
         want = {'index': {'$in': [1, 12, 15]}}
         self.assertEqual(query.Query(raw).encode(Doc), want, "encoded query is incorrect")
 
-        # test dicts and lists
+        # test lists
         raw = {'$or': [{'index': "12"}, {'index': 15}]}
         want = {'$or': [{'index': 12}, {'index': 15}]}
+        self.assertEqual(query.Query(raw).encode(Doc), want, "encoded query is incorrect")
+
+        # test dicts
+        raw = {'$not': {'index': "12"}}
+        want = {'$not': {'index': 12}}
         self.assertEqual(query.Query(raw).encode(Doc), want, "encoded query is incorrect")
 
     def test_op(self):
@@ -103,6 +108,9 @@ class TestQuery(unittest.TestCase):
         c2 = OrderedDict([('$not', c1)])
         self.assertEqual(query.Query(c1).negate().criteria, c2, "negated query is incorrect")
         self.assertEqual(query.Query(c2).negate().criteria, c1, "negated query is incorrect")
+
+        c1 = OrderedDict([])
+        self.assertEqual(query.Query(c1).negate().criteria, c1, "negated query is incorrect")
 
     def test_q(self):
         """Q == Query."""

@@ -120,11 +120,9 @@ class DateType(FieldType):
 
     def decode(self, cls, name, value):
         """Return the date value from the stored datetime."""
-        if is_date_obj(value):
-            return value
-        if is_datetime_obj(value):
-            return value.date()
-        raise EncodingError(cls, name, value, False)
+        if not is_datetime_obj(value):
+            raise EncodingError(cls, name, value, False)
+        return value.date()
 
 
 class DateTimeType(FieldType):
