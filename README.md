@@ -3,6 +3,8 @@ minimongo
 A small, efficient, easy to use [MongoDB][1] object layer built on top of
 [PyMongo][2].
 
+[![Build Status](https://travis-ci.org/WiFast/minimongo.svg?branch=master)](https://travis-ci.org/WiFast/minimongo)
+
 License
 -------
 Copyright (c) 2014 WiFast, Inc. This project and all of its contents is
