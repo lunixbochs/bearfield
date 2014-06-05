@@ -1,8 +1,8 @@
 """Tests for the field module."""
 import unittest
 from datetime import date, datetime, time
-from minimongo import errors
-from minimongo.field import Field
+from bearfield import errors
+from bearfield.field import Field
 
 
 class TestField(unittest.TestCase):

@@ -13,7 +13,7 @@ setup_requires = [
 ]
 
 setup(
-    name='minimongo',
+    name='bearfield',
     version='0.1',
     description="Small MongoDB object layer.",
     long_description=open(readme).read(),
@@ -28,7 +28,7 @@ setup(
     keywords='python mongodb',
     author='WiFast',
     author_email='rgb@wifast.com',
-    url='https://github.com/WiFast/minimongo',
+    url='https://github.com/WiFast/bearfield',
     license='BSD-derived',
     zip_safe=False,
     packages=find_packages(exclude=['tests']),

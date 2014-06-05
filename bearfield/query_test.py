@@ -2,7 +2,7 @@
 import unittest
 from collections import OrderedDict
 from datetime import time
-from minimongo import query, Document, Field
+from bearfield import query, Document, Field
 
 
 class TestQuery(unittest.TestCase):

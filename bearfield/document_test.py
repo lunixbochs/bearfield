@@ -1,7 +1,7 @@
 """Test document module."""
 import unittest
 from datetime import datetime
-from minimongo import connection, document, errors, Field
+from bearfield import connection, document, errors, Field
 
 uri = 'mongodb://localhost/test'
 

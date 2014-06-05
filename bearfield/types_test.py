@@ -1,7 +1,7 @@
 """Tests for the types module."""
 import unittest
 from datetime import date, datetime, time
-from minimongo import errors, types, Document, Field
+from bearfield import errors, types, Document, Field
 
 
 class ExampleType(types.FieldType):

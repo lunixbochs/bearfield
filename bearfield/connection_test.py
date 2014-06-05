@@ -1,6 +1,6 @@
 """Tests for the connection module."""
 import unittest
-from minimongo import connection, errors
+from bearfield import connection, errors
 from pymongo import MongoClient
 from pymongo.errors import AutoReconnect
 

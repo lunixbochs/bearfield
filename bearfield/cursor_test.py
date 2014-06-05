@@ -1,6 +1,6 @@
 """Tests for the cursor module."""
 import unittest
-from minimongo import cursor, Connection, Document, Field, Query
+from bearfield import cursor, Connection, Document, Field, Query
 
 uri = 'mongodb://localhost/test'
 
