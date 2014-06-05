@@ -36,6 +36,28 @@ class Document(object):
         return doc
 
     @classmethod
+    def _validate(cls, raw, update=False):
+        """
+        Validate the raw document. Raise a ValidationError if validation fails. If the raw document
+        is an update document then update should be set to True.
+        """
+        if update:
+            raw = raw.get('$set', {})
+        required = []
+        for name, field in cls._meta.fields.iteritems():
+            value = raw.get(name)
+            if value is None:
+                if field.require:
+                    required.append(name)
+            else:
+                field.validate(cls, name, value)
+
+        if not update and required:
+            doc = cls.__name__
+            required = ', '.join(sorted(required))
+            raise ValidationError("{} is missing required fields: {}".format(doc, required))
+
+    @classmethod
     def _collection(cls, connection, method):
         """
         Return a collection to operate against. Raise an OperationError if the document is a
@@ -110,28 +132,6 @@ class Document(object):
                 if value is not None:
                     raw[name] = field.encode(self.__class__, name, value)
         return raw
-
-    @classmethod
-    def _validate(cls, raw, update=False):
-        """
-        Validate the raw document. Raise a ValidationError if validation fails. If the raw document
-        is an update document then update should be set to True.
-        """
-        if update:
-            raw = raw.get('$set', {})
-        required = []
-        for name, field in cls._meta.fields.iteritems():
-            value = raw.get(name)
-            if value is None:
-                if field.require:
-                    required.append(name)
-            else:
-                field.validate(cls, name, value)
-
-        if not update and required:
-            doc = cls.__name__
-            required = ', '.join(sorted(required))
-            raise ValidationError("{} is missing required fields: {}".format(doc, required))
 
     def save(self, connection=None, **options):
         """
