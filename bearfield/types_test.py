@@ -1,7 +1,8 @@
 """Tests for the types module."""
 import unittest
-from datetime import date, datetime, time
 from bearfield import errors, types, Document, Field
+from collections import OrderedDict
+from datetime import date, datetime, time
 
 
 class ExampleType(types.FieldType):
@@ -294,7 +295,7 @@ class TestListType(unittest.TestCase):
         self.assertEqual(have, items, "decoded untyped list value is incorrect")
 
 
-class TestListType(unittest.TestCase):
+class TestSetType(unittest.TestCase):
     """Test the ListType class."""
 
     def test_encode(self):
@@ -323,3 +324,57 @@ class TestListType(unittest.TestCase):
         items = [1, 2, 'three']
         have = typ.decode('test', 'test', items)
         self.assertEqual(have, set(items), "decoded untyped list value is incorrect")
+
+
+class TestDictType(unittest.TestCase):
+    """Test the DictType class."""
+
+    def test_encode(self):
+        """DictType.encode"""
+        def test(typ, items, want):
+            have = typ.encode('test', 'test', items)
+            self.assertIsInstance(have, OrderedDict, "returned value has incorrect type")
+            self.assertEqual(dict(have), dict(want), "returned value is incorrect")
+
+        # test regular value
+        items = {'a': 'aye', 'b': 'bee'}
+        want = items.copy()
+        typ = types.DictType({'_': str})
+        test(typ, items, want)
+
+        # test value with non-str keys
+        items = {1: '1', 4: '4'}
+        want = {'1': 1, '4': 4}
+        typ = types.DictType({'_': int})
+        test(typ, items, want)
+
+        # test untyped value
+        items = {'one': 1, 'two': 'second'}
+        want = items.copy()
+        typ = types.DictType(dict)
+        test(typ, items, want)
+
+    def test_decode(self):
+        """DictType.decode"""
+        def test(typ, items, want):
+            have = typ.decode('test', 'test', items)
+            self.assertIsInstance(have, OrderedDict, "returned value has incorrect type")
+            self.assertEqual(dict(have), dict(want), "returned value is incorrect")
+
+        # test regular value
+        items = {'a': 'aye', 'b': 'bee'}
+        want = items.copy()
+        typ = types.DictType({'_': str})
+        test(typ, items, want)
+
+        # test value with non-str keys
+        items = {'1': 1, '4': 4}
+        want = items.copy()
+        typ = types.DictType({'_': int})
+        test(typ, items, want)
+
+        # test untyped value
+        items = {'one': 1, 'two': 'second'}
+        want = items.copy()
+        typ = types.DictType(dict)
+        test(typ, items, want)

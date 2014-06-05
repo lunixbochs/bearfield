@@ -1,4 +1,5 @@
 """Define additional field types that require encodeing and/or decoding."""
+from collections import OrderedDict
 from datetime import date, datetime, time
 from errors import EncodingError
 
@@ -44,8 +45,13 @@ def is_list_type(typ):
 
 
 def is_set_type(typ):
-    """Return True if obj is a list or tuple."""
+    """Return True if obj is a set."""
     return is_type(typ, set)
+
+
+def is_dict_type(typ):
+    """Return True if obj is a dict."""
+    return is_type(typ, dict)
 
 
 def is_date_obj(obj):
@@ -75,8 +81,13 @@ def is_list_obj(obj):
 
 
 def is_set_obj(obj):
-    """Return True if obj is a list or tuple."""
+    """Return True if obj is a set."""
     return isinstance(obj, set)
+
+
+def is_dict_obj(obj):
+    """Return True if obj is a dict."""
+    return isinstance(obj, dict)
 
 
 def register_field_type(check, field_type):
@@ -245,7 +256,7 @@ class ListType(FieldType):
 
 
 class SetType(FieldType):
-    """Support a list of type dict values with strings for keys.""" 
+    """Support a set of typed values."""
 
     def __init__(self, typ):
         """Create a set type using the given type."""
@@ -273,9 +284,39 @@ class SetType(FieldType):
         return set(value)
 
 
+class DictType(FieldType):
+    """Support a list of type dict values with strings for keys.""" 
+
+    def __init__(self, typ):
+        """Create s dict type using the given type."""
+        if is_dict_type(typ) or is_dict_obj(typ) and len(typ) == 0:
+            self.typ = None
+        elif is_dict_obj(typ):
+            self.typ = FieldType.create(typ.values()[0])
+
+    def encode(self, cls, name, value):
+        """Return the value encoded as a dict of encoded values."""
+        if self.typ is not None:
+            encoded = OrderedDict()
+            for key, item in value.iteritems():
+                encoded[str(key)] = self.typ.encode(cls, name, item)
+            return encoded
+        return OrderedDict(value)
+
+    def decode(self, cls, name, value):
+        """Return the value decoded as a list of decoded values."""
+        if self.typ is not None:
+            decoded = OrderedDict()
+            for key, item in value.iteritems():
+                decoded[key] = self.typ.decode(cls, name, item)
+            return decoded
+        return OrderedDict(value)
+
+
 register_field_type(is_date_type, DateType)
 register_field_type(is_datetime_type, DateTimeType)
 register_field_type(is_time_type, TimeType)
 register_field_type(is_document_type, DocumentType)
 register_field_type(is_list_type, ListType)
 register_field_type(is_set_type, SetType)
+register_field_type(is_dict_type, DictType)
