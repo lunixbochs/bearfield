@@ -82,9 +82,6 @@ class DocumentMeta(object):
             return connection[self.collection]
         return None
 
-    def __repr__(self):
-        return '<DocumentMeta ({})>'.format(self.cls.__name__)
-
 
 class DocumentBuilder(type):
     """Metaclass for building document classes."""
