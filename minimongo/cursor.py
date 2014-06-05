@@ -27,8 +27,6 @@ class Cursor(object):
     def pymongo(self):
         """Return the pymongo cursor which underlies this object."""
         if not getattr(self, '_pymongo_cursor', None):
-            print("criteria: {}".format(self.criteria))
-            print("collection: {}".format(self.collection.name))
             self._pymongo_cursor = self.collection.find(self.criteria, **self.options)
         return self._pymongo_cursor
 
