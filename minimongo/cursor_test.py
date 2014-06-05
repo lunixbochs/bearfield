@@ -58,6 +58,12 @@ class TestCursor(unittest.TestCase):
             cur.criteria, criteria5,
             "third cursor has invalid criteria {} != {}".format(cur.criteria, criteria3))
 
+    def test_getitem(self):
+        """Cursor.__getitem___"""
+        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1} )
+        doc = cur[0]
+        self.assertEqual(doc, self.docs[0], "returned document is incorrect")
+
     def test_iter(self):
         """Cursor.__iter__"""
         cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1})

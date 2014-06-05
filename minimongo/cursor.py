@@ -44,6 +44,10 @@ class Cursor(object):
         res = self.collection.remove(self.criteria)
         return res.get('n', 0)
 
+    def __getitem__(self, index):
+        """Return the document at the given index.""" 
+        return self.document._decode(self.pymongo[index])
+
     def __iter__(self):
         """Return the cursor iterator."""
         return self
