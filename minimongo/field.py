@@ -28,6 +28,8 @@ class Field(object):
         def setter(self, value):
             self._attrs[name] = value
             self._dirty.add(name)
+            if self._partial:
+                self._partial.add(name)
 
         return setter
 

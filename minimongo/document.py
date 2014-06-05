@@ -23,12 +23,30 @@ class Document(object):
     __metaclass__ = DocumentBuilder
 
     @classmethod
-    def _decode(cls, raw):
-        """Return a document decoded from a MongoDB record."""
+    def _make_partial(cls, fields):
+        """Return a valid partial value from a list of fields."""
+        if fields:
+            return {'_id'} | set(fields)
+        return None
+
+    @classmethod
+    def _fields(cls, partial):
+        """Return a dictionary containing active fields."""
+        if partial:
+            return {k: cls._meta.fields[k] for k in partial if k in cls._meta.fields}
+        return cls._meta.fields
+
+    @classmethod
+    def _decode(cls, raw, fields=None):
+        """
+        Return a document decoded from a MongoDB record. If fields is not None then a partial
+        document will be created with those field values.
+        """
         if raw is None:
             return None
         doc = cls()
-        for name, field in cls._meta.fields.iteritems():
+        doc._partial = cls._make_partial(fields)
+        for name, field in cls._fields(doc._partial).iteritems():
             value = raw.get(name)
             if value is not None:
                 value = field.decode(cls, name, value)
@@ -36,7 +54,7 @@ class Document(object):
         return doc
 
     @classmethod
-    def _validate(cls, raw, update=False):
+    def _validate(cls, raw, partial=None, update=False):
         """
         Validate the raw document. Raise a ValidationError if validation fails. If the raw document
         is an update document then update should be set to True.
@@ -44,7 +62,7 @@ class Document(object):
         if update:
             raw = raw.get('$set', {})
         required = []
-        for name, field in cls._meta.fields.iteritems():
+        for name, field in cls._fields(partial).iteritems():
             value = raw.get(name)
             if value is None:
                 if field.require:
@@ -74,32 +92,39 @@ class Document(object):
         return collection
 
     @classmethod
-    def find(cls, criteria=None, connection=None, **options):
+    def find(cls, criteria=None, fields=None, connection=None, **options):
         """
         Query the database for documents. Return a cursor for further refining or iterating over
-        the results. Additional args are passed to pymongo's find().
+        the results. If fields is not None only return the field values in that list. Additional
+        args are passed to pymongo's find().
         """
         collection = cls._collection(connection, 'find')
-        return Cursor(cls, collection, criteria, **options)
+        fields = cls._make_partial(fields)
+        return Cursor(cls, collection, criteria, fields, **options)
 
     @classmethod
-    def find_one(cls, criteria=None, connection=None, **options):
+    def find_one(cls, criteria=None, fields=None, connection=None, **options):
         """
         Query the database for a single document. Return the document or None if not found.
-        Additional args are passed to pymongo's find().
+        Additional args are passed to pymongo's find(). If fields is not None only return the field
+        values in that list.
         """
         collection = cls._collection(connection, 'find_one')
-        return cls._decode(collection.find_one(criteria, **options))
+        fields = cls._make_partial(fields)
+        options.pop('manipulate', None)
+        return cls._decode(collection.find_one(criteria, fields=fields, **options), fields)
 
     @classmethod
-    def find_and_modify(cls, criteria, update, connection=None, **options):
+    def find_and_modify(cls, criteria, update, fields=None, connection=None, **options):
         """
         Query the database for a document, update it, then return the new document. Additional args
         are passed to pymongo's find_and_modify().
         """
         collection = cls._collection(connection, 'find_and_modify')
+        fields = cls._make_partial(fields)
         options.pop('new', None)
-        return cls._decode(collection.find_and_modify(criteria, update, new=True, **options))
+        raw = collection.find_and_modify(criteria, update, fields=fields, new=True, **options)
+        return cls._decode(raw, fields)
 
     def __init__(self, *args, **kwargs):
         """Initialize the document with values."""
@@ -114,7 +139,7 @@ class Document(object):
         if update:
             sets = {}
             unsets = {}
-            for name, field in self._meta.fields.iteritems():
+            for name, field in self._fields(self._partial).iteritems():
                 if name not in self._dirty:
                     continue
                 value = getattr(self, name, None)
@@ -127,7 +152,7 @@ class Document(object):
             if unsets:
                 raw['$unset'] = unsets
         else:
-            for name, field in self._meta.fields.iteritems():
+            for name, field in self._fields(self._partial).iteritems():
                 value = getattr(self, name, None)
                 if value is not None:
                     raw[name] = field.encode(self.__class__, name, value)
@@ -138,9 +163,11 @@ class Document(object):
         Save the model to the database. Effectively performs an insert if the _id field is None and
         a full document update otherwise. Additional args are passed to pymongo's save().
         """
+        if self._partial:
+            raise OperationError("unable to save partial document")
         collection = self._collection(connection, 'save')
         raw = self._encode()
-        self._validate(raw)
+        self._validate(raw, self._partial)
         options.pop('manipulate', None)
         self._id = collection.save(raw, manipulate=True, **options)
         self._dirty = set()
@@ -154,7 +181,7 @@ class Document(object):
         """
         collection = self._collection(connection, 'insert')
         raw = self._encode()
-        self._validate(raw)
+        self._validate(raw, self._partial)
         options.pop('manipulate', None)
         self._id = collection.insert(raw, manipulate=True, **options)
         self._dirty = set()
@@ -171,11 +198,12 @@ class Document(object):
             raise OperationError("unable to update document without an _id")
         collection = self._collection(connection, 'update')
         update = update or self._encode(True)
-        self._validate(update.get('$set', {}), True)
+        self._validate(update.get('$set', {}), self._partial, True)
         if update:
             options.pop('multi', None)
+            options.pop('fields', None)
             self._attrs = collection.find_and_modify(
-                {'_id': self._id}, update, multi=False, **options)
+                {'_id': self._id}, update, fields=self._partial, multi=False, **options)
             self._dirty = set()
             return True
         return False

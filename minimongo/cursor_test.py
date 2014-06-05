@@ -10,10 +10,12 @@ class TestCursor(unittest.TestCase):
 
     class DocumentMock(object):
         def __init__(self, *args, **kwargs):
-            self._decoded = None
+            self.decoded = None
+            self.fields = None
 
-        def _decode(self, item):
-            item['decoded'] = True
+        def _decode(self, item, fields):
+            self.decoded = item
+            self.fields = fields
             return item
 
     def setUp(self):
@@ -34,7 +36,7 @@ class TestCursor(unittest.TestCase):
 
     def test_connection(self):
         """Cursor.connection"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, None)
+        cur = cursor.Cursor(self.DocumentMock(), self.collection, None, None)
         self.assertEqual(cur.connection, self.con, "cursor connection is incorrect")
 
     def test_find(self):
@@ -45,7 +47,7 @@ class TestCursor(unittest.TestCase):
         criteria4 = {'index': {'$lt': 2}}
         criteria5 = {'$and': [criteria1, criteria2, criteria4]}
 
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, criteria1)
+        cur = cursor.Cursor(self.DocumentMock(), self.collection, criteria1, None)
         self.assertEqual(
             cur.criteria, criteria1,
             "first cursor has invalid criteria {} != {}".format(cur.criteria, criteria1))
@@ -60,19 +62,19 @@ class TestCursor(unittest.TestCase):
 
     def test_getitem(self):
         """Cursor.__getitem___"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1} )
+        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1}, None)
         doc = cur[0]
         self.assertEqual(doc, self.docs[0], "returned document is incorrect")
 
     def test_iter(self):
         """Cursor.__iter__"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1})
+        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1}, None)
         it = cur.__iter__()
         self.assertIsInstance(it, cursor.Cursor, "returned value has invalid type")
 
     def test_close(self):
         """Cursor.close"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1})
+        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1}, None)
         cur.close()
         len(cur)
         cur.close()
