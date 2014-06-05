@@ -62,7 +62,7 @@ class TestDocument(unittest.TestCase):
 
     def setUp(self):
         self.con = connection.Connection(uri)
-        connection.register_connection('test', self.con)
+        connection.add('test', self.con)
 
     def tearDown(self):
         name = self.con.database.name

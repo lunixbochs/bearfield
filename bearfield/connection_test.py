@@ -101,31 +101,44 @@ class TestFunctions(unittest.TestCase):
     """Test module functions."""
 
     def test_get(self):
-        """connection.get_connection"""
+        """connection.get"""
         con = connection.Connection(uri)
         try:
             name = 'test'
             connection.connections[name] = con
             self.assertEqual(
-                connection.get_connection(name), con, "returned connection is incorrect")
+                connection.get(name), con, "returned connection is incorrect")
         finally:
             con.close()
             connection.connections = {}
         
-    def test_register(self):
-        """connection.register_connection"""
+    def test_add(self):
+        """connection.add"""
         con = connection.Connection(uri)
         try:
             name = 'test'
-            connection.register_connection(name, con)
+            connection.add(name, con)
             self.assertEquals(
                 connection.connections[name], con, "registered connection is incorrect")
         finally:
             con.close()
             connection.connections = {}
 
-    def test_initialize(self):
-        """Connection.initialize_connections"""
+        config = {'uri': uri, 'prefix': 'units_'}
+        name = 'test'
+        connection.add(name, config)
+        con = connection.connections[name]
+        try:
+            self.assertEquals(
+                con.database.name, 'test', "registered connection is incorrect")
+            self.assertEquals(
+                con.prefix, config['prefix'], "registered connection is incorrect")
+        finally:
+            con.close()
+            connection.connections = {}
+
+    def test_configure(self):
+        """Connection.configure"""
         test1 = 'mongodb://localhost/test1'
         test2 = 'mongodb://localhost/test2'
         prefix2 = 'units_'
@@ -138,21 +151,21 @@ class TestFunctions(unittest.TestCase):
         }
 
         try:
-            connection.initialize_connections(config)
-            con1 = connection.get_connection('test1')
+            connection.configure(config)
+            con1 = connection.get('test1')
             self.assertTrue(con1.client.alive(), "con1 is not alive")
             self.assertEqual(con1.prefix, "", "con1 prefix is incorrect")
             self.assertEqual(con1.database.name, "test1", "con1 database is incorrect")
 
-            con2 = connection.get_connection('test2')
+            con2 = connection.get('test2')
             self.assertTrue(con2.client.alive(), "con2 is not alive")
             self.assertEqual(con2.prefix, prefix2, "con2 prefix is incorrect")
             self.assertEqual(con2.database.name, "test2", "con2 database is incorrect")
 
             self.assertRaises(
-                errors.ConfigError, connection.initialize_connections, {'broken': ''})
+                errors.ConfigError, connection.configure, {'broken': ''})
             self.assertRaises(
-                errors.ConfigError, connection.initialize_connections, {'broken': {'uri': ''}})
+                errors.ConfigError, connection.configure, {'broken': {'uri': ''}})
         finally:
             for name, con in connection.connections.iteritems():
                 con.close()

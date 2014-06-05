@@ -1,4 +1,4 @@
-from .connection import Connection, get_connection, register_connection, initialize_connections
+from .connection import Connection, configure
 from .document import Document
 from .field import Field
 from .query import Q, Query
@@ -11,7 +11,5 @@ __all__ = [
     'ObjectId',
     'Q',
     'Query',
-    'get_connection',
-    'initialize_connections',
-    'register_connection',
+    'configure',
 ]

@@ -1,5 +1,5 @@
 """Meta functionality used for document creation."""
-from .connection import Connection, get_connection
+from .connection import Connection, get as get_connection
 from .field import Field
 from bson import ObjectId
 from collections import defaultdict

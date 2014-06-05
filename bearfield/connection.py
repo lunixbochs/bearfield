@@ -10,6 +10,20 @@ connections = {}
 class Connection(object):
     """A lazy database connection."""
 
+    @classmethod
+    def configure(cls, config):
+        """
+        Create a new connection using the provided configuration. The configuration may be a uri or
+        a dictionary containing values for uri, prefix. retries, and backoff. Additional options
+        are passed to the MongoClient init.
+        """
+        if not isinstance(config, dict):
+            config = {'uri': config}
+        uri = config.pop('uri', None)
+        if not uri:
+            raise ConfigError("invalid uri: {}".format(uri))
+        return cls(uri, **config)
+
     def __init__(self, uri, prefix=None, retries=None, backoff=None, **options):
         """
         Initialize the connection. The URI should be a full mongodb:// URI including the datbase
@@ -86,17 +100,21 @@ class CollectionProxy(object):
         return value
 
 
-def get_connection(name):
+def get(name):
     """Return a named connection or None if not found."""
     return connections.get(name)
 
 
-def register_connection(name, connection):
-    """Register a named connection."""
+def add(name, connection):
+    """
+    Add a named connection. The connection may be a Connection object or configuration for one.
+    """
+    if not isinstance(connection, Connection):
+        connection = Connection.configure(connection)
     connections[name] = connection
 
 
-def initialize_connections(config):
+def configure(config):
     """
     Initialize connections from the provided configuration. The config object is a dictionary
     containing named connections. The keys of the dictionary are the names while the values are the
@@ -106,14 +124,4 @@ def initialize_connections(config):
     MongoClient.
     """
     for name, options in config.iteritems():
-        if isinstance(options, dict):
-            uri = options.pop('uri', None)
-            prefix = options.pop('prefix', None)
-            if not uri:
-                raise ConfigError("connection {} is missing uri".format(name))
-            connection = Connection(uri, prefix, **options)
-        else:
-            if not options:
-                raise ConfigError("connection {} is missing uri".format(name))
-            connection = Connection(options)
-        register_connection(name, connection)
+        add(name, options)
