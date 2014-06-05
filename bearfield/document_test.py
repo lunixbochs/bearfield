@@ -11,7 +11,7 @@ class Address(document.Document):
     street = Field(str)
     city = Field(str)
     state = Field(str)
-    zipcode = Field(int) 
+    zipcode = Field(int)
 
 
 class Location(document.Document):
@@ -33,7 +33,7 @@ class TestDocument(unittest.TestCase):
         name = Field(str)
         optional = Field(str, require=False)
 
-    class DatedDocument(document.Document): 
+    class DatedDocument(document.Document):
         class Meta:
             connection = 'test'
         index = Field(int)
@@ -265,7 +265,7 @@ class TestPartialDocument(unittest.TestCase):
         docs = self.Document.find({'index': 1}, ['type'])
         want = {'_id': docs[0]._id, 'type': 'the best kind'}
         have = docs[0]._encode()
-        self.assertEquals(have, want, "found document is incorrect") 
+        self.assertEquals(have, want, "found document is incorrect")
 
     def test_find_one(self):
         """Document.find_one (partial)"""
@@ -273,12 +273,13 @@ class TestPartialDocument(unittest.TestCase):
         doc = self.Document.find_one({'index': 1}, ['type'])
         want = {'_id': doc._id, 'type': 'the best kind'}
         have = doc._encode()
-        self.assertEquals(have, want, "found document is incorrect") 
+        self.assertEquals(have, want, "found document is incorrect")
 
     def test_find_and_modify(self):
         """Document.find_and_modify (partial)"""
         self.Document(index=1, name='the first', type='the worst kind').save()
-        doc = self.Document.find_and_modify({'index': 1}, {'$set': {'type': 'the best kind'}}, ['type'])
+        doc = self.Document.find_and_modify(
+            {'index': 1}, {'$set': {'type': 'the best kind'}}, ['type'])
         want = {'_id': doc._id, 'type': 'the best kind'}
         have = doc._encode()
-        self.assertEquals(have, want, "found document is incorrect") 
+        self.assertEquals(have, want, "found document is incorrect")

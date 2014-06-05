@@ -27,14 +27,15 @@ class TestConnection(unittest.TestCase):
         finally:
             con.close()
 
-    def test_collection(self):  
+    def test_collection(self):
         """Connection.__getitem__"""
         prefix = 'units_'
         name = 'test'
         con = connection.Connection(uri, prefix=prefix)
         try:
             collection = con[name]
-            self.assertIsInstance(collection, connection.CollectionProxy, "collection proxy not returned")
+            self.assertIsInstance(
+                collection, connection.CollectionProxy, "collection proxy not returned")
             self.assertEqual(collection.name, prefix + name, "incorrect collection returned")
 
             collection = con[None]
@@ -111,7 +112,7 @@ class TestFunctions(unittest.TestCase):
         finally:
             con.close()
             connection.connections = {}
-        
+
     def test_add(self):
         """connection.add"""
         con = connection.Connection(uri)

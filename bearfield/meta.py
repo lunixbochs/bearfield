@@ -2,7 +2,6 @@
 from .connection import Connection, get as get_connection
 from .field import Field
 from bson import ObjectId
-from collections import defaultdict
 from utils import to_snake_case
 
 
@@ -44,7 +43,7 @@ class DocumentMeta(object):
             parent = parent.parent
 
         def __init__(self, *args, **kwargs):
-            self._raw =  meta.defaults.copy()
+            self._raw = meta.defaults.copy()
             self._attrs = {}
             self._dirty = set()
             self._partial = None

@@ -3,7 +3,6 @@ from .cursor import Cursor
 from .errors import OperationError, ValidationError
 from .meta import DocumentBuilder
 from .query import Query
-from collections import defaultdict
 
 
 class Document(object):

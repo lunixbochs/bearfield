@@ -1,6 +1,5 @@
 """Cursors for iterating over documents."""
 from .query import Query
-from copy import deepcopy
 
 
 class Cursor(object):
@@ -43,7 +42,8 @@ class Cursor(object):
     def pymongo(self):
         """Return the pymongo cursor which underlies this object."""
         if not getattr(self, '_pymongo_cursor', None):
-            self._pymongo_cursor = self.collection.find(self._criteria, fields=self.fields, **self.options)
+            self._pymongo_cursor = self.collection.find(
+                self._criteria, fields=self.fields, **self.options)
         return self._pymongo_cursor
 
     def find(self, query):
@@ -57,7 +57,7 @@ class Cursor(object):
         return res.get('n', 0)
 
     def __getitem__(self, index):
-        """Return the document at the given index.""" 
+        """Return the document at the given index."""
         return self.document._decode(self.pymongo[index], self.fields)
 
     def __iter__(self):
