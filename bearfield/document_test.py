@@ -161,6 +161,8 @@ class TestDocument(unittest.TestCase):
         doc1.save()
 
         doc = self.Document.find_and_modify({'index': 2}, {'$set': {'name': 'the second'}})
+        self.assertEqual(doc.name, 'the fourth', "old value not returned")
+        doc = self.Document.find_one()
         self.assertEqual(doc.name, 'the second', "valid update did not occur")
 
         doc = self.Document.find_and_modify({'index': 3}, {'$set': {'name': 'the third'}})

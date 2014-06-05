@@ -122,14 +122,14 @@ class Document(object):
     @classmethod
     def find_and_modify(cls, query, update, fields=None, connection=None, **options):
         """
-        Query the database for a document, update it, then return the new document. Additional args
-        are passed to pymongo's find_and_modify().
+        Query the database for a document, update it, then return the old document before
+        modification. Additional args are passed to pymongo's find_and_modify().
         """
         collection = cls._collection(connection, 'find_and_modify')
         fields = cls._make_partial(fields)
         options.pop('new', None)
         criteria = cls._make_criteria(query)
-        raw = collection.find_and_modify(criteria, update, fields=fields, new=True, **options)
+        raw = collection.find_and_modify(criteria, update, fields=fields, new=False, **options)
         return cls._decode(raw, fields)
 
     def __init__(self, *args, **kwargs):
