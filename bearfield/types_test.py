@@ -59,14 +59,18 @@ class TestFunctions(unittest.TestCase):
 
     def test_register_field_type(self):
         """types.register_field_type"""
-        check = lambda t: True
-        field_type = ExampleType
+        old_types = list(types.registered_field_types)
+        try:
+            check = lambda t: True
+            field_type = ExampleType
 
-        want = list(types.registered_field_types)
-        want.append((check, field_type))
+            want = list(types.registered_field_types)
+            want.append((check, field_type))
 
-        types.register_field_type(check, field_type)
-        self.assertEqual(types.registered_field_types, want, "failed to add field type")
+            types.register_field_type(check, field_type)
+            self.assertEqual(types.registered_field_types, want, "failed to add field type")
+        finally:
+            types.registered_field_types = old_types
 
 
 class TestFieldType(unittest.TestCase):
@@ -222,6 +226,7 @@ class TestTimeType(unittest.TestCase):
 
 
 class TestDocumentType(unittest.TestCase):
+    """Test the DocumentType class."""
 
     class Doc(Document):
         index = Field(int)
@@ -258,3 +263,34 @@ class TestDocumentType(unittest.TestCase):
         value = {'index': 12}
         typ = types.DocumentType(self.Doc)
         self.assertRaises(errors.ValidationError, typ.validate, 'test', 'test', value)
+
+
+class TestListType(unittest.TestCase):
+    """Test the ListType class."""
+
+    def test_encode(self):
+        """ListType.encode"""
+        items = ('1', '2', 3)
+        want = [1, 2, 3]
+        typ = types.ListType([int])
+        have = typ.encode('test', 'test', items)
+        self.assertEqual(have, want, "encoded typed list value is incorrect")
+
+        items = ('1', '2', 'some value')
+        typ = types.ListType(list)
+        have = typ.encode('test', 'test', items)
+        print(have)
+        print(items)
+        self.assertEqual(have, list(items), "encoded untyped list value is incorrect")
+
+    def test_decode(self):
+        """ListType.decode"""
+        typ = types.ListType([int])
+        items = [1, 2, 3]
+        have = typ.decode('test', 'test', items)
+        self.assertEqual(have, items, "decoded typed list value is incorrect")
+
+        typ = types.ListType(list)
+        items = [1, 2, 'three']
+        have = typ.decode('test', 'test', items)
+        self.assertEqual(have, items, "decoded untyped list value is incorrect")

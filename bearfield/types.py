@@ -26,10 +26,18 @@ def is_time_type(typ):
     return issubclass(typ, time)
 
 
-def is_document_type(obj):
+def is_document_type(typ):
     """Return True if type is a Document."""
     from .document import Document
-    return issubclass(obj, Document)
+    return issubclass(typ, Document)
+
+
+def is_list_type(typ):
+    """Return True if obj is a list or tuple."""
+    try:
+        return issubclass(typ, list) or issubclass(typ, tuple)
+    except TypeError:
+        return False
 
 
 def is_date_obj(obj):
@@ -51,6 +59,11 @@ def is_document_obj(obj):
     """Return True if obj is a Document."""
     from .document import Document
     return isinstance(obj, Document)
+
+
+def is_list_obj(obj):
+    """Return True if obj is a list or tuple."""
+    return isinstance(obj, (list, tuple))
 
 
 def register_field_type(check, field_type):
@@ -189,7 +202,37 @@ class DocumentType(FieldType):
         self.document._validate(value)
 
 
+class ListType(FieldType):
+    """Support a list of typed values."""
+
+    def __init__(self, typ):
+        """Create a list type using the given type."""
+        if is_list_type(typ) or is_list_obj(typ) and len(typ) == 0:
+            self.typ = None
+        elif is_list_obj(typ):
+            self.typ = FieldType.create(typ[0])
+
+    def encode(self, cls, name, value):
+        """Return the value encoded as a list of encoded values."""
+        if self.typ is not None:
+            encoded = []
+            for item in value:
+                encoded.append(self.typ.encode(cls, name, item))
+            return encoded
+        return list(value)
+
+    def decode(self, cls, name, value):
+        """Return the value decoded as a list of decoded values."""
+        if self.typ is not None:
+            decoded = []
+            for item in value:
+                decoded.append(self.typ.decode(cls, name, item))
+            return decoded
+        return list(value)
+
+
 register_field_type(is_date_type, DateType)
 register_field_type(is_datetime_type, DateTimeType)
 register_field_type(is_time_type, TimeType)
 register_field_type(is_document_type, DocumentType)
+register_field_type(is_list_type, ListType)
