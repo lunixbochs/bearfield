@@ -73,14 +73,6 @@ class Query(object):
             criteria = [(op, [deepcopy(self.criteria), deepcopy(query.criteria)])]
             return Query(criteria)
 
-    def _and(self, query):
-        """And this query with another and return the resulting query."""
-        return self._op('$and', query)
-
-    def _or(self, query):
-        """Or this query with another and return the resulting query."""
-        return self._op('$or', query)
-
     def negate(self):
         """Negate a query."""
         if len(self.criteria) == 0:

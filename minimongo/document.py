@@ -2,6 +2,7 @@
 from .cursor import Cursor
 from .errors import OperationError, ValidationError
 from .meta import DocumentBuilder
+from .query import Query
 from collections import defaultdict
 
 
@@ -28,6 +29,13 @@ class Document(object):
         if fields:
             return {'_id'} | set(fields)
         return None
+
+    @classmethod
+    def _make_criteria(cls, query):
+        """Return a criteria dict for a query."""
+        if isinstance(query, Query):
+            query = Query(query).encode(self)
+        return query
 
     @classmethod
     def _fields(cls, partial):
@@ -92,7 +100,7 @@ class Document(object):
         return collection
 
     @classmethod
-    def find(cls, criteria=None, fields=None, connection=None, **options):
+    def find(cls, query=None, fields=None, connection=None, **options):
         """
         Query the database for documents. Return a cursor for further refining or iterating over
         the results. If fields is not None only return the field values in that list. Additional
@@ -100,10 +108,10 @@ class Document(object):
         """
         collection = cls._collection(connection, 'find')
         fields = cls._make_partial(fields)
-        return Cursor(cls, collection, criteria, fields, **options)
+        return Cursor(cls, collection, query, fields, **options)
 
     @classmethod
-    def find_one(cls, criteria=None, fields=None, connection=None, **options):
+    def find_one(cls, query=None, fields=None, connection=None, **options):
         """
         Query the database for a single document. Return the document or None if not found.
         Additional args are passed to pymongo's find(). If fields is not None only return the field
@@ -112,10 +120,11 @@ class Document(object):
         collection = cls._collection(connection, 'find_one')
         fields = cls._make_partial(fields)
         options.pop('manipulate', None)
+        criteria = cls._make_criteria(query)
         return cls._decode(collection.find_one(criteria, fields=fields, **options), fields)
 
     @classmethod
-    def find_and_modify(cls, criteria, update, fields=None, connection=None, **options):
+    def find_and_modify(cls, query, update, fields=None, connection=None, **options):
         """
         Query the database for a document, update it, then return the new document. Additional args
         are passed to pymongo's find_and_modify().
@@ -123,6 +132,7 @@ class Document(object):
         collection = cls._collection(connection, 'find_and_modify')
         fields = cls._make_partial(fields)
         options.pop('new', None)
+        criteria = cls._make_criteria(query)
         raw = collection.find_and_modify(criteria, update, fields=fields, new=True, **options)
         return cls._decode(raw, fields)
 

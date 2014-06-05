@@ -1,4 +1,5 @@
 """Cursors for iterating over documents."""
+from .query import Query
 from copy import deepcopy
 
 
@@ -8,17 +9,30 @@ class Cursor(object):
     find().
     """
 
-    def __init__(self, document, collection, criteria, fields, **options):
+    def __init__(self, document, collection, query, fields, **options):
         """
-        Initialize the cursor with the given find criteria. The find will be executed against the
+        Initialize the cursor with the given find query. The find will be executed against the
         given connection. Additional args are passed to pymongo's find().
         """
         self.document = document
         self.collection = collection
-        self.criteria = criteria
+        self.query = self._make_query(query)
         self.fields = fields
         self.options = options
         self.options.pop('manipulate', None)
+
+    def _make_query(self, query):
+        """Return a query for an object of dubious origin."""
+        if query is not None and not isinstance(query, Query):
+            query = Query(query)
+        return query
+
+    @property
+    def _criteria(self):
+        """Return the encoded criteria for the cursor."""
+        if self.query is None:
+            return None
+        return self.query.encode(self.document)
 
     @property
     def connection(self):
@@ -29,21 +43,17 @@ class Cursor(object):
     def pymongo(self):
         """Return the pymongo cursor which underlies this object."""
         if not getattr(self, '_pymongo_cursor', None):
-            self._pymongo_cursor = self.collection.find(self.criteria, fields=self.fields, **self.options)
+            self._pymongo_cursor = self.collection.find(self._criteria, fields=self.fields, **self.options)
         return self._pymongo_cursor
 
-    def find(self, criteria):
-        """Refine the cursor's scope with additional criteria. Return a new cursor."""
-        if len(self.criteria) == 1 and '$and' in self.criteria:
-            criteria_chain = deepcopy(self.criteria)
-        else:
-            criteria_chain = {'$and': [deepcopy(self.criteria)]}
-        criteria_chain['$and'].append(criteria)
-        return Cursor(self.document, self.collection, criteria_chain, self.fields, **self.options)
+    def find(self, query):
+        """Refine the cursor's scope with an additional query. Return a new cursor."""
+        query = self.query & self._make_query(query)
+        return Cursor(self.document, self.collection, query, self.fields, **self.options)
 
     def remove(self):
         """Remove the documents matched by this cursor."""
-        res = self.collection.remove(self.criteria)
+        res = self.collection.remove(self._criteria)
         return res.get('n', 0)
 
     def __getitem__(self, index):

@@ -1,6 +1,6 @@
 """Tests for the cursor module."""
 import unittest
-from minimongo import cursor, Connection
+from minimongo import cursor, Connection, Document, Field, Query
 
 uri = 'mongodb://localhost/test'
 
@@ -8,15 +8,11 @@ uri = 'mongodb://localhost/test'
 class TestCursor(unittest.TestCase):
     """Test the Cursor class."""
 
-    class DocumentMock(object):
-        def __init__(self, *args, **kwargs):
-            self.decoded = None
-            self.fields = None
-
-        def _decode(self, item, fields):
-            self.decoded = item
-            self.fields = fields
-            return item
+    class Document(Document):
+        class Meta:
+            connection = 'test'
+        index = Field(int)
+        name = Field(str)
 
     def setUp(self):
         self.con = Connection(uri)
@@ -36,45 +32,37 @@ class TestCursor(unittest.TestCase):
 
     def test_connection(self):
         """Cursor.connection"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, None, None)
+        cur = cursor.Cursor(self.Document(), self.collection, None, None)
         self.assertEqual(cur.connection, self.con, "cursor connection is incorrect")
 
     def test_find(self):
         """Cursor.find"""
-        criteria1 = {'index': 1}
-        criteria2 = {'name': 'first'}
-        criteria3 = {'$and': [criteria1, criteria2]}
-        criteria4 = {'index': {'$lt': 2}}
-        criteria5 = {'$and': [criteria1, criteria2, criteria4]}
+        q1 = Query({'index': 1})
+        q2 = Query({'name': 'first'})
+        qr = q1 & q2
 
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, criteria1, None)
-        self.assertEqual(
-            cur.criteria, criteria1,
-            "first cursor has invalid criteria {} != {}".format(cur.criteria, criteria1))
-        cur = cur.find(criteria2)
-        self.assertEqual(
-            cur.criteria, criteria3,
-            "second cursor has invalid criteria {} != {}".format(cur.criteria, criteria3))
-        cur = cur.find(criteria4)
-        self.assertEqual(
-            cur.criteria, criteria5,
-            "third cursor has invalid criteria {} != {}".format(cur.criteria, criteria3))
+        cur = cursor.Cursor(self.Document(), self.collection, q1, None)
+        cur = cur.find(q2)
+        self.assertEqual(cur.query.criteria, qr.criteria, "cursor has invalid criteria")
 
     def test_getitem(self):
         """Cursor.__getitem___"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1}, None)
+        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None)
         doc = cur[0]
-        self.assertEqual(doc, self.docs[0], "returned document is incorrect")
+        have = doc._encode()
+        want = {'_id': doc._id}
+        want.update(self.docs[0])
+        self.assertEqual(have, want, "returned document is incorrect")
 
     def test_iter(self):
         """Cursor.__iter__"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1}, None)
+        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None)
         it = cur.__iter__()
         self.assertIsInstance(it, cursor.Cursor, "returned value has invalid type")
 
     def test_close(self):
         """Cursor.close"""
-        cur = cursor.Cursor(self.DocumentMock(), self.collection, {'index': 1}, None)
+        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None)
         cur.close()
         len(cur)
         cur.close()
