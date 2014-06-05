@@ -43,6 +43,11 @@ def is_list_type(typ):
     return is_type(typ, list) or is_type(typ, tuple)
 
 
+def is_set_type(typ):
+    """Return True if obj is a list or tuple."""
+    return is_type(typ, set)
+
+
 def is_date_obj(obj):
     """Return True if obj is a date."""
     return isinstance(obj, date) and not isinstance(obj, datetime)
@@ -67,6 +72,11 @@ def is_document_obj(obj):
 def is_list_obj(obj):
     """Return True if obj is a list or tuple."""
     return isinstance(obj, (list, tuple))
+
+
+def is_set_obj(obj):
+    """Return True if obj is a list or tuple."""
+    return isinstance(obj, set)
 
 
 def register_field_type(check, field_type):
@@ -234,8 +244,38 @@ class ListType(FieldType):
         return list(value)
 
 
+class SetType(FieldType):
+    """Support a list of type dict values with strings for keys.""" 
+
+    def __init__(self, typ):
+        """Create a set type using the given type."""
+        if is_set_type(typ) or is_set_obj(typ) and len(typ) == 0:
+            self.typ = None
+        elif is_set_obj(typ):
+            self.typ = FieldType.create(list(typ)[0])
+
+    def encode(self, cls, name, value):
+        """Return the value encoded as a list of encoded values."""
+        if self.typ is not None:
+            encoded = []
+            for item in value:
+                encoded.append(self.typ.encode(cls, name, item))
+            return encoded
+        return list(value)
+
+    def decode(self, cls, name, value):
+        """Return the value decoded as a list of decoded values."""
+        if self.typ is not None:
+            decoded = set()
+            for item in value:
+                decoded.add(self.typ.decode(cls, name, item))
+            return decoded
+        return set(value)
+
+
 register_field_type(is_date_type, DateType)
 register_field_type(is_datetime_type, DateTimeType)
 register_field_type(is_time_type, TimeType)
 register_field_type(is_document_type, DocumentType)
 register_field_type(is_list_type, ListType)
+register_field_type(is_set_type, SetType)

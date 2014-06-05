@@ -279,8 +279,6 @@ class TestListType(unittest.TestCase):
         items = ('1', '2', 'some value')
         typ = types.ListType(list)
         have = typ.encode('test', 'test', items)
-        print(have)
-        print(items)
         self.assertEqual(have, list(items), "encoded untyped list value is incorrect")
 
     def test_decode(self):
@@ -294,3 +292,34 @@ class TestListType(unittest.TestCase):
         items = [1, 2, 'three']
         have = typ.decode('test', 'test', items)
         self.assertEqual(have, items, "decoded untyped list value is incorrect")
+
+
+class TestListType(unittest.TestCase):
+    """Test the ListType class."""
+
+    def test_encode(self):
+        """ListType.encode"""
+        items = {'1', '2', 3}
+        want = {1, 2, 3}
+        typ = types.SetType({int})
+        have = typ.encode('test', 'test', items)
+        self.assertIsInstance(have, list, "encoded set has invalid type") 
+        self.assertEqual(set(have), want, "encoded typed list value is incorrect")
+
+        items = {'1', '2', 'some value'}
+        typ = types.SetType(set)
+        have = typ.encode('test', 'test', items)
+        self.assertIsInstance(have, list, "encoded set has invalid type") 
+        self.assertEqual(set(have), items, "encoded untyped list value is incorrect")
+
+    def test_decode(self):
+        """ListType.decode"""
+        typ = types.SetType({int})
+        items = [1, 2, 3]
+        have = typ.decode('test', 'test', items)
+        self.assertEqual(have, set(items), "decoded typed list value is incorrect")
+
+        typ = types.SetType(set)
+        items = [1, 2, 'three']
+        have = typ.decode('test', 'test', items)
+        self.assertEqual(have, set(items), "decoded untyped list value is incorrect")
