@@ -47,6 +47,8 @@ class Query(object):
 
     def __init__(self, criteria):
         """Initialize the query with the provided criteria."""
+        if isinstance(criteria, Query):
+            criteria = Query.criteria.copy()
         if not isinstance(criteria, OrderedDict):
             criteria = OrderedDict(criteria)
         self.criteria = criteria
