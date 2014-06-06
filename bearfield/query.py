@@ -47,9 +47,11 @@ class Query(object):
 
     def __init__(self, criteria):
         """Initialize the query with the provided criteria."""
-        if isinstance(criteria, Query):
-            criteria = Query.criteria.copy()
-        if not isinstance(criteria, OrderedDict):
+        if criteria is None:    
+            criteria = OrderedDict()
+        elif isinstance(criteria, Query):
+            criteria = criteria.criteria.copy()
+        elif not isinstance(criteria, OrderedDict):
             criteria = OrderedDict(criteria)
         self.criteria = criteria
 
@@ -59,6 +61,8 @@ class Query(object):
 
     def encode(self, document):
         """Return the encoded query in the context of the given document."""
+        if not self.criteria:
+            return None
         return encode_query(document, self.criteria)
 
     def _op(self, op, query):
