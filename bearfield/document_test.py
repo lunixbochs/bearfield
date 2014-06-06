@@ -154,6 +154,7 @@ class TestDocument(unittest.TestCase):
         q = Q({'name': 'the second'})
         doc = self.Document.find_one(q)
         self.assertEqual(doc._id, doc1._id, "returned incorrect document")
+        doc._meta.get_collection().remove()
 
     def test_find_and_modify(self):
         """Document.find_and_modify"""
@@ -167,6 +168,7 @@ class TestDocument(unittest.TestCase):
 
         doc = self.Document.find_and_modify({'index': 3}, {'$set': {'name': 'the third'}})
         self.assertIsNone(doc, "invalid update did occur")
+        doc1._meta.get_collection().remove()
 
     def test_subdocument(self):
         """Document.save/find with subdocument"""
