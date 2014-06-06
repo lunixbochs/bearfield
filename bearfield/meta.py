@@ -1,5 +1,6 @@
 """Meta functionality used for document creation."""
 from .connection import Connection, get as get_connection
+from .errors import OperationError
 from .field import Field
 from bson import ObjectId
 from utils import to_snake_case
@@ -80,11 +81,19 @@ class DocumentMeta(object):
         return get_connection(self.connection)
 
     def get_collection(self, connection=None):
-        """Return the collection associated with this document."""
-        connection = self.get_connection(connection)
-        if connection:
-            return connection[self.collection]
-        return None
+        """
+        Return the collection associated with this document. If error it True then errors are Raise
+        an OperationError if the document has no collection.
+        """
+        if self.collection:
+            connection = self.get_connection(connection)
+            if connection:
+                return connection[self.collection]
+        if self.subdocument:
+            msg = "subdocument {} does not have a collection".format(self.cls.__name__)
+        else:
+            msg = "document {} does not have a connection".format(self.cls.__name__)
+        raise OperationError(msg)
 
     def get_partial(self, fields):
         """Return a valid partial value from a list of fields."""

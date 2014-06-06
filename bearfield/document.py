@@ -58,29 +58,13 @@ class Document(object):
             raise ValidationError("{} is missing required fields: {}".format(doc, required))
 
     @classmethod
-    def _collection(cls, connection, method):
-        """
-        Return a collection to operate against. Raise an OperationError if the document is a
-        subdocument or is not associated with a collection. The method param should be the name of
-        the method on the document that is being called.
-        """
-        if cls._meta.subdocument:
-            raise OperationError(
-                "{}.{}(): invalid subdocument operation".format(cls.__name__, method))
-        collection = cls._meta.get_collection(connection)
-        if not collection:
-            raise OperationError(
-                "{}.{}(): no collection associated with document".format(cls.__name__, method))
-        return collection
-
-    @classmethod
     def find(cls, query=None, fields=None, connection=None, **options):
         """
         Query the database for documents. Return a cursor for further refining or iterating over
         the results. If fields is not None only return the field values in that list. Additional
         args are passed to pymongo's find().
         """
-        collection = cls._collection(connection, 'find')
+        collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
         return Cursor(cls, collection, query, fields, **options)
 
@@ -91,7 +75,7 @@ class Document(object):
         Additional args are passed to pymongo's find(). If fields is not None only return the field
         values in that list.
         """
-        collection = cls._collection(connection, 'find_one')
+        collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
         options.pop('manipulate', None)
         criteria = Query(query).encode(cls)
@@ -103,7 +87,7 @@ class Document(object):
         Query the database for a document, update it, then return the old document before
         modification. Additional args are passed to pymongo's find_and_modify().
         """
-        collection = cls._collection(connection, 'find_and_modify')
+        collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
         options.pop('new', None)
         criteria = Query(query).encode(cls)
@@ -164,7 +148,7 @@ class Document(object):
         """
         if self._partial:
             raise OperationError("unable to save partial document")
-        collection = self._collection(connection, 'save')
+        collection = self._meta.get_collection(connection)
         raw = self._encode()
         self._validate(raw, self._partial)
         options.pop('manipulate', None)
@@ -178,7 +162,7 @@ class Document(object):
         insert the same document into multiple databases. Additional args are passed to pymongo's
         insert().
         """
-        collection = self._collection(connection, 'insert')
+        collection = self._meta.get_collection(connection)
         raw = self._encode()
         self._validate(raw, self._partial)
         options.pop('manipulate', None)
@@ -195,7 +179,7 @@ class Document(object):
         """
         if not self._id:
             raise OperationError("unable to update document without an _id")
-        collection = self._collection(connection, 'update')
+        collection = self._meta.get_collection(connection)
         reset = not bool(update)
         update = update or self._encode(True)
         self._validate(update.get('$set', {}), self._partial, True)
@@ -214,7 +198,7 @@ class Document(object):
         Remove the document from the database. Additional args are passed to pymongo's remove().
         Return True if the document was removed or False if there was nothing to remove.
         """
-        collection = self._collection(connection, 'remove')
+        collection = self._meta.get_collection(connection)
         if self._id:
             res = collection.remove(self._id)
             return res.get('n', 0) > 0
