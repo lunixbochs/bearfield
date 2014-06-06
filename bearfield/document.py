@@ -23,13 +23,6 @@ class Document(object):
     __metaclass__ = DocumentBuilder
 
     @classmethod
-    def _fields(cls, partial):
-        """Return a dictionary containing active fields."""
-        if partial:
-            return {k: cls._meta.fields[k] for k in partial if k in cls._meta.fields}
-        return cls._meta.fields
-
-    @classmethod
     def _decode(cls, raw, fields=None):
         """
         Return a document decoded from a MongoDB record. If fields is not None then a partial
@@ -51,7 +44,7 @@ class Document(object):
         if update:
             raw = raw.get('$set', {})
         required = []
-        for name, field in cls._fields(partial).iteritems():
+        for name, field in cls._meta.get_fields(partial).iteritems():
             value = raw.get(name)
             if value is None:
                 if field.require:
@@ -130,7 +123,7 @@ class Document(object):
         if update:
             sets = {}
             unsets = {}
-            for name, field in self._fields(self._partial).iteritems():
+            for name, field in self._meta.get_fields(self._partial).iteritems():
                 if name not in self._dirty:
                     continue
                 value = self._attrs.get(name)
@@ -143,7 +136,7 @@ class Document(object):
             if unsets:
                 raw['$unset'] = unsets
         else:
-            for name, field in self._fields(self._partial).iteritems():
+            for name, field in self._meta.get_fields(self._partial).iteritems():
                 if name in self._attrs:
                     value = self._attrs[name]
                     if value is not None:

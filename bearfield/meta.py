@@ -92,6 +92,12 @@ class DocumentMeta(object):
             return {'_id'} | set(fields)
         return None
 
+    def get_fields(self, partial):
+        """Return a dictionary containing active fields."""
+        if partial:
+            return {k: self.fields[k] for k in partial if k in self.fields}
+        return self.fields
+
 
 class DocumentBuilder(type):
     """Metaclass for building document classes."""
