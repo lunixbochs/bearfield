@@ -8,6 +8,40 @@ list_comparisons = {'$in', '$nin'}
 comparisons = scalar_comparisons | list_comparisons
 
 
+def encode_query_field(document, field, name, value):
+    """Return an encoded field."""
+    if isinstance(value, dict) and len(value) == 1 and value.keys()[0] in comparisons:
+        comparison = value.keys()[0]
+        value = value[comparison]
+        if comparison in list_comparisons:
+            encoded = []
+            for item in value:
+                if item is not None:
+                    item = field.encode(document, name, item)
+                encoded.append(item)
+            value = encoded
+        else:
+            if value is not None:
+                value = field.encode(document, name, value)
+        value = OrderedDict([(comparison, value)])
+    else:
+        value = field.encode(document, name, value)
+    return value
+
+def encode_query(document, criteria):
+    """Return the encoded criteria."""
+    encoded = OrderedDict()
+    for name, value in criteria.iteritems():
+        field = document._meta.fields.get(name)
+        if field:
+            encoded[name] = encode_query_field(document, field, name, value)
+        elif isinstance(value, dict):
+            encoded[name] = encode_query(document, value)
+        elif isinstance(value, (tuple, list, set)):
+            encoded[name] = [encode_query(document, item) for item in value]
+    return encoded
+
+
 class Query(object):
     """A query abstracts a MongoDB query."""
 
@@ -21,42 +55,9 @@ class Query(object):
         """Return a copy of the query."""
         return Query(deepcopy(self.criteria))
 
-    def _encode_field(self, document, field, name, value):
-        """Return an encoded field."""
-        if isinstance(value, dict) and len(value) == 1 and value.keys()[0] in comparisons:
-            comparison = value.keys()[0]
-            value = value[comparison]
-            if comparison in list_comparisons:
-                encoded = []
-                for item in value:
-                    if item is not None:
-                        item = field.encode(document, name, item)
-                    encoded.append(item)
-                value = encoded
-            else:
-                if value is not None:
-                    value = field.encode(document, name, value)
-            value = OrderedDict([(comparison, value)])
-        else:
-            value = field.encode(document, name, value)
-        return value
-
-    def _encode(self, document, criteria):
-        """Return the encoded criteria."""
-        encoded = OrderedDict()
-        for name, value in criteria.iteritems():
-            field = document._meta.fields.get(name)
-            if field:
-                encoded[name] = self._encode_field(document, field, name, value)
-            elif isinstance(value, dict):
-                encoded[name] = self._encode(document, value)
-            elif isinstance(value, (tuple, list, set)):
-                encoded[name] = [self._encode(document, item) for item in value]
-        return encoded
-
     def encode(self, document):
         """Return the encoded query in the context of the given document."""
-        return self._encode(document, self.criteria)
+        return encode_query(document, self.criteria)
 
     def _op(self, op, query):
         """Combine two queries with an operator and return the resulting query."""
