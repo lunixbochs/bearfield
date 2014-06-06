@@ -20,6 +20,7 @@ class Field(object):
         self.validators = [self.typ.validate]
 
     def __call__(field, doc, name):
+        """Return the document property used to access the field."""
         @property
         def var(self):
             if name not in self._attrs:
