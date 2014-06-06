@@ -291,7 +291,7 @@ class TestPartialDocument(unittest.TestCase):
         try:
             doc = self.Document.find_and_modify(
                 {'index': 1}, {'$set': {'type': 'the best kind'}}, ['type'])
-            want = {'_id': doc._id, 'type': 'the best kind'}
+            want = {'_id': doc._id, 'type': 'the worst kind'}
             have = doc._encode()
             self.assertEquals(have, want, "found document is incorrect")
         finally:
