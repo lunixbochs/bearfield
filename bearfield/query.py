@@ -2,48 +2,54 @@
 from collections import OrderedDict
 from copy import deepcopy
 
-
 scalar_comparisons = {'$gt', '$gte', '$lt', '$lte', '$ne'}
 list_comparisons = {'$in', '$nin'}
-comparisons = scalar_comparisons | list_comparisons
 
 
-def encode_query_field(document, field, name, value):
-    """Return an encoded field."""
-    if isinstance(value, dict) and len(value) == 1 and value.keys()[0] in comparisons:
-        comparison = value.keys()[0]
-        value = value[comparison]
-        if comparison in list_comparisons:
-            encoded = []
-            for item in value:
-                if item is not None:
-                    item = field.encode(document, name, item)
-                encoded.append(item)
-            value = encoded
+class QueryEncoder(object):
+    """Encode query specs."""
+
+    def __init__(self, document):
+        """Create an encoder for the given document class."""
+        self.document = document
+
+    def field(self, name, value):
+        """Return the encoded query value for the given field."""
+        field = self.document._meta.fields[name]
+        if isinstance(value, dict):
+            encoded = OrderedDict()
+            for comparison, value in value.iteritems():
+                if comparison in list_comparisons:
+                    encoded_value = []
+                    for item in value:
+                        if item is not None:
+                            item = field.encode(self.document, name, item)
+                        encoded_value.append(item)
+                    value = encoded_value
+                elif comparison in scalar_comparisons:
+                    value = field.encode(self.document, name, value)
+                encoded[comparison] = value
         else:
-            if value is not None:
-                value = field.encode(document, name, value)
-        value = OrderedDict([(comparison, value)])
-    else:
-        value = field.encode(document, name, value)
-    return value
+            encoded = field.encode(self.document, name, value)
+        return encoded
 
-def encode_query(document, criteria):
-    """Return the encoded criteria."""
-    if not criteria:
-        return None
-    encoded = OrderedDict()
-    for name, value in criteria.iteritems():
-        field = document._meta.fields.get(name)
-        if field:
-            encoded[name] = encode_query_field(document, field, name, value)
-        elif isinstance(value, dict):
-            encoded[name] = encode_query(document, value)
-        elif isinstance(value, (tuple, list, set)):
-            encoded[name] = [encode_query(document, item) for item in value]
-        else:
-            encoded[name] = value
-    return encoded
+    def encode(self, criteria):
+        """Return an encoded query value."""
+        if not isinstance(criteria, dict):
+            raise TypeError("query criteria must be of type dict")
+        if not criteria:
+            return None
+        encoded = OrderedDict()
+        for name, value in criteria.iteritems():
+            if name in self.document._meta.fields:
+                encoded[name] = self.field(name, value)
+            elif isinstance(value, dict):
+                encoded[name] = self.encode(value)
+            elif isinstance(value, (tuple, list, set)):
+                encoded[name] = [self.encode(item) for item in value]
+            else:
+                encoded[name] = value
+        return encoded
 
 
 class Query(object):
@@ -65,7 +71,7 @@ class Query(object):
 
     def encode(self, document):
         """Return the encoded query in the context of the given document."""
-        return encode_query(document, self.criteria)
+        return QueryEncoder(document).encode(self.criteria)
 
     def _op(self, op, query):
         """Combine two queries with an operator and return the resulting query."""

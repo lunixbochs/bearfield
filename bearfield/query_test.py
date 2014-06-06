@@ -1,7 +1,7 @@
 """Test the query module."""
 import unittest
 from collections import OrderedDict
-from datetime import time
+from datetime import datetime, time
 from bearfield import query, Document, Field
 
 
@@ -51,6 +51,10 @@ class TestQuery(unittest.TestCase):
         raw = {'not-a-field': 'seems like a legitimate value'}
         want = raw.copy()
         self.assertEqual(query.Query(raw).encode(Doc), want, "encoded query is incorrect")
+
+        # test something that isn't a dict at all
+        raw = datetime.now()
+        self.assertRaises(TypeError, query.Query, raw)
 
     def test_op(self):
         """Query._op"""
