@@ -12,7 +12,7 @@ BearField has some fun features:
   until you do.
 - Simple field declarations. It's super simple: `value = Field(str)`
 - Subdocuments are easy, too: `subdoc = Field(MyDocument)`
-- Query chaining: Q({'value': 'first'}) | Q({'value': 'third'})
+- Query chaining: `Q({'value': 'first'}) | Q({'value': 'third'})`
 - Multiple connections and databases.
 - And more, I'm sure!
 
