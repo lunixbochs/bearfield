@@ -30,6 +30,8 @@ def encode_query_field(document, field, name, value):
 
 def encode_query(document, criteria):
     """Return the encoded criteria."""
+    if not criteria:
+        return None
     encoded = OrderedDict()
     for name, value in criteria.iteritems():
         field = document._meta.fields.get(name)
@@ -61,8 +63,6 @@ class Query(object):
 
     def encode(self, document):
         """Return the encoded query in the context of the given document."""
-        if not self.criteria:
-            return None
         return encode_query(document, self.criteria)
 
     def _op(self, op, query):
