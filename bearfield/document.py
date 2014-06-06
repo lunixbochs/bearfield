@@ -2,7 +2,121 @@
 from .cursor import Cursor
 from .errors import OperationError, ValidationError
 from .meta import DocumentBuilder
-from .query import Query
+from .query import Query, QueryEncoder
+from collections import OrderedDict
+
+
+class UpdateEncoder(object):
+    """Encode update specs."""
+    scalars = {
+        '$inc',
+        '$mul',
+        '$setOnInsert',
+        '$set',
+        '$unset',
+        '$min',
+        '$max',
+        '$addToSet',
+    }
+
+    lists = {
+        '$pullAll',
+        '$pushAll',
+    }
+
+    queries = {
+        '$pull',
+    }
+
+    ignored = {
+        '$rename',
+        '$currentDate',
+        '$pop',
+        '$bit',
+    }
+
+    with_options = {
+        '$pull',
+        '$assToSet',
+    }
+
+    options = {
+        '$each',
+        '$slice',
+        '$sort',
+        '$position',
+    }
+
+    convert = {
+        '$rename': str,
+        '$pop': int,
+        '$position': int,
+        '$bit': int,
+    }
+
+    def __init__(self, document):
+        """Create an encoder for the given document class."""
+        self.document = document
+        self.query_encoder = QueryEncoder(document)
+
+    def field(self, name, value):
+        """Return an encoded field."""
+        field = self.document._meta.fields.get(name)
+        if field:
+            value = field.encode(self.document, name, value)
+        return value
+
+    def options(self, name, value):
+        """Return encoded $push or $addToSet value."""
+        if isinstance(value, dict) and set(value.keys()) - self.options == set():
+            encoded = OrderedDict()
+            for option, values in value.iteritems():
+                if option == '$each':
+                    values = [self.field(name, v) for v in values]
+                elif option in {'$slice', '$position'}:
+                    values = int(values)
+                encoded[option] = values
+        else:
+            encoded = self.field(name, value)
+        return value
+
+    def list(self, name, value):
+        """Return an encoded list value."""
+        if isinstance(values, (list, tuple, set)):
+            return [self.field(name, v) for v in value]
+        return value
+
+    def query(self, name, value):
+        """Return an encoded query value."""
+        encoded = OrderedDict()
+        for name, value in values.iteritems():
+            encoded[name] = self.query_encoder.encode(value)
+        return encoded
+
+    def encode(self, update):
+        """Return an encoded update value."""
+        if not isinstance(update, dict):
+            raise TypeError("update spec must be of type dict")
+        if not update:
+            return None
+        encoded = OrderedDict()
+        for update, values in update.iteritems():
+            if isinstance(values, dict):
+                encoded_values = OrderedDict()
+                for name, value in values.iteritems():
+                    if update in self.with_options:
+                        value = self.options(name, value)
+                    elif update in self.scalars:
+                        value = self.field(name, value)
+                    elif update in self.lists:
+                        value = self.list(name, value)
+                    elif update in self.queries:
+                        value = self.query(name, value)
+                    elif update in self.convert:
+                        value = self.convert[update](value)
+                    encoded_values[name] = value
+            encoded[update] = encoded_values
+        return encoded
 
 
 class Document(object):
@@ -91,6 +205,7 @@ class Document(object):
         fields = cls._meta.get_partial(fields)
         options.pop('new', None)
         criteria = Query(query).encode(cls)
+        update = UpdateEncoder(cls).encode(update)
         raw = collection.find_and_modify(criteria, update, fields=fields, new=False, **options)
         return cls._decode(raw, fields)
 
@@ -179,9 +294,16 @@ class Document(object):
         """
         if not self._id:
             raise OperationError("unable to update document without an _id")
+
         collection = self._meta.get_collection(connection)
-        reset = not bool(update)
-        update = update or self._encode(True)
+
+        if update:
+            update = UpdateEncoder(self.__class__).encode(update)
+            reset = False
+        else:
+            update = self._encode(True)
+            reset = True
+
         self._validate(update.get('$set', {}), self._partial, True)
         if update:
             options.pop('multi', None)
