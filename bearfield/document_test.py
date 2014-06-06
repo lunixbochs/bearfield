@@ -239,47 +239,60 @@ class TestPartialDocument(unittest.TestCase):
         raw = {'index': 1, 'name': 'the first'}
         doc = self.Document._decode(raw, raw.keys())
         doc.insert()
-        _id = doc._id
+        try:
+            _id = doc._id
 
-        want = {'_id': _id}
-        want.update(raw)
-        doc = self.Document.find_one({'_id': _id})
-        self.assertEqual(doc._encode(), want, "stored document is invalid")
-        self.Document.find().remove()
+            want = {'_id': _id}
+            want.update(raw)
+            doc = self.Document.find_one({'_id': _id})
+            self.assertEqual(doc._encode(), want, "stored document is invalid")
+        finally:
+            self.Document.find().remove()
 
     def test_update(self):
         """Document.update (partial)"""
         raw = {'index': 1, 'name': 'the last'}
         doc = self.Document._decode(raw, raw.keys())
         doc.insert()
-        doc.name = 'the first'
-        doc.update()
+        try:
+            doc.name = 'the first'
+            doc.update()
 
-        doc = self.Document.find_one({'_id': doc._id})
-        self.assertEqual(doc.name, 'the first', "document not updated")
-        self.Document.find().remove()
+            doc = self.Document.find_one({'_id': doc._id})
+            self.assertEqual(doc.name, 'the first', "document not updated")
+        finally:
+            self.Document.find().remove()
 
     def test_find(self):
         """Document.find (partial)"""
         self.Document(index=1, name='the first', type='the best kind').save()
-        docs = self.Document.find({'index': 1}, ['type'])
-        want = {'_id': docs[0]._id, 'type': 'the best kind'}
-        have = docs[0]._encode()
-        self.assertEquals(have, want, "found document is incorrect")
+        try:
+            docs = self.Document.find({'index': 1}, ['type'])
+            want = {'_id': docs[0]._id, 'type': 'the best kind'}
+            have = docs[0]._encode()
+            self.assertEquals(have, want, "found document is incorrect")
+        finally:
+            self.Document.find().remove()
 
     def test_find_one(self):
         """Document.find_one (partial)"""
         self.Document(index=1, name='the first', type='the best kind').save()
-        doc = self.Document.find_one({'index': 1}, ['type'])
-        want = {'_id': doc._id, 'type': 'the best kind'}
-        have = doc._encode()
-        self.assertEquals(have, want, "found document is incorrect")
+        try:
+            doc = self.Document.find_one({'index': 1}, ['type'])
+            want = {'_id': doc._id, 'type': 'the best kind'}
+            have = doc._encode()
+            self.assertEquals(have, want, "found document is incorrect")
+        finally:
+            self.Document.find().remove()
 
     def test_find_and_modify(self):
         """Document.find_and_modify (partial)"""
         self.Document(index=1, name='the first', type='the worst kind').save()
-        doc = self.Document.find_and_modify(
-            {'index': 1}, {'$set': {'type': 'the best kind'}}, ['type'])
-        want = {'_id': doc._id, 'type': 'the best kind'}
-        have = doc._encode()
-        self.assertEquals(have, want, "found document is incorrect")
+        try:
+            doc = self.Document.find_and_modify(
+                {'index': 1}, {'$set': {'type': 'the best kind'}}, ['type'])
+            want = {'_id': doc._id, 'type': 'the best kind'}
+            have = doc._encode()
+            self.assertEquals(have, want, "found document is incorrect")
+        finally:
+            self.Document.find().remove()
