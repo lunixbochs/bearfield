@@ -2,12 +2,22 @@
 from collections import OrderedDict
 from copy import deepcopy
 
-scalar_comparisons = {'$gt', '$gte', '$lt', '$lte', '$ne'}
-list_comparisons = {'$in', '$nin'}
 
 
 class QueryEncoder(object):
     """Encode query specs."""
+    scalars = {
+        '$gt',
+        '$gte',
+        '$lt',
+        '$lte',
+        '$ne',
+    }
+
+    lists = {
+        '$in',
+        '$nin',
+    }
 
     def __init__(self, document):
         """Create an encoder for the given document class."""
@@ -19,14 +29,14 @@ class QueryEncoder(object):
         if isinstance(value, dict):
             encoded = OrderedDict()
             for comparison, value in value.iteritems():
-                if comparison in list_comparisons:
+                if comparison in self.lists:
                     encoded_value = []
                     for item in value:
                         if item is not None:
                             item = field.encode(self.document, name, item)
                         encoded_value.append(item)
                     value = encoded_value
-                elif comparison in scalar_comparisons:
+                elif comparison in self.scalars:
                     value = field.encode(self.document, name, value)
                 encoded[comparison] = value
         else:
@@ -42,13 +52,12 @@ class QueryEncoder(object):
         encoded = OrderedDict()
         for name, value in criteria.iteritems():
             if name in self.document._meta.fields:
-                encoded[name] = self.field(name, value)
+                value = self.field(name, value)
             elif isinstance(value, dict):
-                encoded[name] = self.encode(value)
+                value = self.encode(value)
             elif isinstance(value, (tuple, list, set)):
-                encoded[name] = [self.encode(item) for item in value]
-            else:
-                encoded[name] = value
+                value = [self.encode(item) for item in value]
+            encoded[name] = value
         return encoded
 
 
