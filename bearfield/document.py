@@ -23,20 +23,6 @@ class Document(object):
     __metaclass__ = DocumentBuilder
 
     @classmethod
-    def _make_partial(cls, fields):
-        """Return a valid partial value from a list of fields."""
-        if fields:
-            return {'_id'} | set(fields)
-        return None
-
-    @classmethod
-    def _make_criteria(cls, query):
-        """Return a criteria dict for a query."""
-        if isinstance(query, Query):
-            query = query.encode(cls)
-        return query
-
-    @classmethod
     def _fields(cls, partial):
         """Return a dictionary containing active fields."""
         if partial:
@@ -53,7 +39,7 @@ class Document(object):
             return None
         doc = cls()
         doc._raw = raw.copy()
-        doc._partial = cls._make_partial(fields)
+        doc._partial = cls._meta.get_partial(fields)
         return doc
 
     @classmethod
@@ -102,7 +88,7 @@ class Document(object):
         args are passed to pymongo's find().
         """
         collection = cls._collection(connection, 'find')
-        fields = cls._make_partial(fields)
+        fields = cls._meta.get_partial(fields)
         return Cursor(cls, collection, query, fields, **options)
 
     @classmethod
@@ -113,9 +99,9 @@ class Document(object):
         values in that list.
         """
         collection = cls._collection(connection, 'find_one')
-        fields = cls._make_partial(fields)
+        fields = cls._meta.get_partial(fields)
         options.pop('manipulate', None)
-        criteria = cls._make_criteria(query)
+        criteria = Query(query).encode(cls)
         return cls._decode(collection.find_one(criteria, fields=fields, **options), fields)
 
     @classmethod
@@ -125,9 +111,9 @@ class Document(object):
         modification. Additional args are passed to pymongo's find_and_modify().
         """
         collection = cls._collection(connection, 'find_and_modify')
-        fields = cls._make_partial(fields)
+        fields = cls._meta.get_partial(fields)
         options.pop('new', None)
-        criteria = cls._make_criteria(query)
+        criteria = Query(query).encode(cls)
         raw = collection.find_and_modify(criteria, update, fields=fields, new=False, **options)
         return cls._decode(raw, fields)
 

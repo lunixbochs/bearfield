@@ -86,6 +86,12 @@ class DocumentMeta(object):
             return connection[self.collection]
         return None
 
+    def get_partial(self, fields):
+        """Return a valid partial value from a list of fields."""
+        if fields:
+            return {'_id'} | set(fields)
+        return None
+
 
 class DocumentBuilder(type):
     """Metaclass for building document classes."""
