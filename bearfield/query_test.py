@@ -47,6 +47,11 @@ class TestQuery(unittest.TestCase):
         want = {'$not': {'index': 12}}
         self.assertEqual(query.Query(raw).encode(Doc), want, "encoded query is incorrect")
 
+        # test something we know we can't encode
+        raw = {'not-a-field': 'seems like a legitimate value'}
+        want = raw.copy()
+        self.assertEqual(query.Query(raw).encode(Doc), want, "encoded query is incorrect")
+
     def test_op(self):
         """Query._op"""
         def test(op, c1, c2, want):

@@ -41,6 +41,8 @@ def encode_query(document, criteria):
             encoded[name] = encode_query(document, value)
         elif isinstance(value, (tuple, list, set)):
             encoded[name] = [encode_query(document, item) for item in value]
+        else:
+            encoded[name] = value
     return encoded
 
 
