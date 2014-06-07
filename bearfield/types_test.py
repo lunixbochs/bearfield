@@ -304,13 +304,13 @@ class TestSetType(unittest.TestCase):
         want = {1, 2, 3}
         typ = types.SetType({int})
         have = typ.encode('test', 'test', items)
-        self.assertIsInstance(have, list, "encoded set has invalid type") 
+        self.assertIsInstance(have, list, "encoded set has invalid type")
         self.assertEqual(set(have), want, "encoded typed list value is incorrect")
 
         items = {'1', '2', 'some value'}
         typ = types.SetType(set)
         have = typ.encode('test', 'test', items)
-        self.assertIsInstance(have, list, "encoded set has invalid type") 
+        self.assertIsInstance(have, list, "encoded set has invalid type")
         self.assertEqual(set(have), items, "encoded untyped list value is incorrect")
 
     def test_decode(self):

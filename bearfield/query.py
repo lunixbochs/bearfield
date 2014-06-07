@@ -3,7 +3,6 @@ from collections import OrderedDict
 from copy import deepcopy
 
 
-
 class QueryEncoder(object):
     """Encode query specs."""
     scalars = {
@@ -66,7 +65,7 @@ class Query(object):
 
     def __init__(self, criteria):
         """Initialize the query with the provided criteria."""
-        if criteria is None:    
+        if criteria is None:
             criteria = OrderedDict()
         elif isinstance(criteria, Query):
             criteria = criteria.criteria.copy()

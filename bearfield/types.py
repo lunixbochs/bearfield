@@ -285,7 +285,7 @@ class SetType(FieldType):
 
 
 class DictType(FieldType):
-    """Support a list of type dict values with strings for keys.""" 
+    """Support a list of type dict values with strings for keys."""
 
     def __init__(self, typ):
         """Create s dict type using the given type."""
