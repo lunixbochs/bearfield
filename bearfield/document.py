@@ -82,16 +82,13 @@ class UpdateEncoder(object):
 
     def list(self, name, value):
         """Return an encoded list value."""
-        if isinstance(values, (list, tuple, set)):
+        if isinstance(value, (list, tuple, set)):
             return [self.field(name, v) for v in value]
         return value
 
     def query(self, name, value):
         """Return an encoded query value."""
-        encoded = OrderedDict()
-        for name, value in values.iteritems():
-            encoded[name] = self.query_encoder.encode(value)
-        return encoded
+        return self.query_encoder.encode(value)
 
     def encode(self, update):
         """Return an encoded update value."""
