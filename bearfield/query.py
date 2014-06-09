@@ -64,13 +64,20 @@ class Query(object):
     """A query abstracts a MongoDB query."""
 
     def __init__(self, criteria):
-        """Initialize the query with the provided criteria."""
+        """
+        Initialize the query with the provided criteria. The criteria may be a Query or any value
+        that may be converted to an OrderedDict which is the internal query representation. Raises
+        a TypeError if criteria does not fit these requirements.
+        """
         if criteria is None:
             criteria = OrderedDict()
         elif isinstance(criteria, Query):
             criteria = criteria.criteria.copy()
         elif not isinstance(criteria, OrderedDict):
-            criteria = OrderedDict(criteria)
+            try:
+                criteria = OrderedDict(criteria)
+            except ValueError:
+                raise TypeError("invalid query value {}".format(repr(criteria)))
         self.criteria = criteria
 
     def copy(self):
