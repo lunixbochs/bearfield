@@ -1,7 +1,7 @@
 """Meta functionality used for document creation."""
 from .connection import Connection, get as get_connection
 from .errors import OperationError
-from .field import Field
+from .field import BaseField, Field
 from bson import ObjectId
 from utils import to_snake_case
 
@@ -19,7 +19,7 @@ class DocumentMeta(object):
 
         if attrs:
             for name, attr in attrs.items():
-                if isinstance(attr, Field):
+                if isinstance(attr, BaseField):
                     self.fields[name] = attr
 
         if meta:

@@ -1,8 +1,56 @@
+"""Field objects."""
 from .errors import EncodingError
 from .types import FieldType
 
 
-class Field(object):
+class BaseField(object):
+    """Base field object which all fields inherit from."""
+    default = None
+
+    def getter(self, obj, name):
+        """Return a document attribute as this field."""
+        if name not in obj._attrs:
+            value = obj._raw.get(name)
+            if value is not None:
+                try:
+                    value = self.decode(obj.__class__, name, value)
+                except EncodingError as e:
+                    raise TypeError(e)
+            obj._attrs[name] = value
+        return obj._attrs[name]
+
+    def setter(self, obj, name, value):
+        """Set a document attribute as this field."""
+        obj._attrs[name] = value
+        obj._dirty.add(name)
+        if obj._partial:
+            obj._partial.add(name)
+
+    def __call__(field, doc, name):
+        """Return the document property used to access the field."""
+        @property
+        def prop(self):
+            return field.getter(self, name)
+
+        @prop.setter
+        def prop(self, value):
+            return field.setter(self, name, value)
+
+        return prop
+
+    def encode(self, cls, name, value):
+        """Return the value encoded for storage in the database."""
+        return value
+
+    def decode(self, cls, name, value):
+        """Return the value decoded from database storage."""
+        return value
+
+    def validate(self, cls, name, value):
+        """Validate the field value. Raise ValidationError on failure."""
+
+
+class Field(BaseField):
     """A field object defines how a document field behaves."""
 
     def __init__(self, typ, require=True, default=None, strict=True):
@@ -18,29 +66,6 @@ class Field(object):
         self.default = default
         self.strict = strict
         self.validators = [self.typ.validate]
-
-    def __call__(field, doc, name):
-        """Return the document property used to access the field."""
-        @property
-        def var(self):
-            if name not in self._attrs:
-                value = self._raw.get(name)
-                if value is not None:
-                    try:
-                        value = field.decode(self.__class__, name, value)
-                    except EncodingError as e:
-                        raise TypeError(e)
-                self._attrs[name] = value
-            return self._attrs[name]
-
-        @var.setter
-        def setter(self, value):
-            self._attrs[name] = value
-            self._dirty.add(name)
-            if self._partial:
-                self._partial.add(name)
-
-        return setter
 
     def ensure(self, func):
         """
