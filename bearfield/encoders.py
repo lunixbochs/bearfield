@@ -63,7 +63,8 @@ class QueryEncoder(object):
                         encoded_value.append(item)
                     value = encoded_value
                 elif comparison in self.scalars:
-                    if isinstance(field.typ, ListType) and not isinstance(value, (list, tuple, set)):
+                    if (isinstance(field.typ, ListType) and
+                            not isinstance(value, (list, tuple, set))):
                         value = field.typ.encode_element(self.document, name, value)
                     else:
                         value = field.encode(self.document, name, value)
@@ -217,7 +218,7 @@ class UpdateEncoder(object):
         return value.encode(self.document)
 
     def encode_currentdate(self, name, value):
-        """Encode a currentdate value.""" 
+        """Encode a currentdate value."""
         if isinstance(value, dict):
             encoded = OrderedDict()
             for item_name, item_value in value.iteritems():

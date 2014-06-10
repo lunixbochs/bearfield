@@ -39,11 +39,6 @@ class TestUpdateEncoder(unittest.TestCase):
                 have = enc.encode(value)
                 self.assertEqual(have, want)
 
-        date_ = date(2014, 1, 1)
-        datet = datetime.combine(date_, time(0))
-        now = datetime.now()
-        nowtime = now.time()
-
         test('$inc', 'number', 2, 2)
         test('$inc', 'number', '2', 2)
         test('$inc', 'number', 'nope', EncodingError)
@@ -67,7 +62,7 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$set', 'array', (1, '2'), [1, 2])
         test('$set', 'array', (1, 'nope'), EncodingError)
         test('$unset', 'date', '', '')
-        test('$unset', 'date', date_, '')
+        test('$unset', 'date', date(2014, 1, 1), '')
         test('$unset', 'number', 3, '')
         test('$unset', 'array', [1, 2], '')
         test('$min', 'number', 100, 100)

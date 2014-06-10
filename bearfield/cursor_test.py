@@ -1,5 +1,5 @@
 """Tests for the cursor module."""
-from bearfield import cursor, test, Connection, Document, Field, Query
+from bearfield import cursor, test, Document, Field, Query
 
 
 class TestCursor(test.TestCase):

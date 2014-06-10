@@ -1,4 +1,4 @@
-"""Common test utilities.""" 
+"""Common test utilities."""
 import unittest
 from bearfield import connection, document
 from pymongo.collection import Collection
@@ -35,7 +35,7 @@ class TestCase(unittest.TestCase):
     def remove(self, collection):
         """Remove collection contents."""
         if isinstance(collection, document.Document):
-            collection = Document._meta.collection
+            collection = document.Document._meta.collection
         if isinstance(collection, basestring):
             for con in connection.connections.values():
                 con.database[collection].remove()

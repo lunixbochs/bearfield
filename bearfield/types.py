@@ -138,7 +138,7 @@ class BuiltinType(FieldType):
         """Return the encoded value."""
         try:
             return self.builtin(value)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError):
             msg = "failed to encode value as {}".format(self.builtin.__name__)
             raise EncodingError(msg, cls, name, value, True)
 
@@ -238,7 +238,7 @@ class ListType(FieldType):
             self.typ = FieldType.create(typ[0])
 
     def encode_element(self, cls, name, value):
-        """Return the encoded value for a single list element.""" 
+        """Return the encoded value for a single list element."""
         return self.typ.encode(cls, name, value)
 
     def encode(self, cls, name, value):
