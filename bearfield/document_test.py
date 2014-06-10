@@ -1,5 +1,5 @@
 """Test document module."""
-from bearfield import connection, document, errors, test, Field, Q
+from bearfield import Field, Q, document, errors, test
 from datetime import datetime
 
 

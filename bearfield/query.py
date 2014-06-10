@@ -1,63 +1,7 @@
 """Query tools."""
+from .encoders import QueryEncoder
 from collections import OrderedDict
 from copy import deepcopy
-
-
-class QueryEncoder(object):
-    """Encode query specs."""
-    scalars = {
-        '$gt',
-        '$gte',
-        '$lt',
-        '$lte',
-        '$ne',
-    }
-
-    lists = {
-        '$in',
-        '$nin',
-    }
-
-    def __init__(self, document):
-        """Create an encoder for the given document class."""
-        self.document = document
-
-    def field(self, name, value):
-        """Return the encoded query value for the given field."""
-        field = self.document._meta.fields[name]
-        if isinstance(value, dict):
-            encoded = OrderedDict()
-            for comparison, value in value.iteritems():
-                if comparison in self.lists:
-                    encoded_value = []
-                    for item in value:
-                        if item is not None:
-                            item = field.encode(self.document, name, item)
-                        encoded_value.append(item)
-                    value = encoded_value
-                elif comparison in self.scalars:
-                    value = field.encode(self.document, name, value)
-                encoded[comparison] = value
-        else:
-            encoded = field.encode(self.document, name, value)
-        return encoded
-
-    def encode(self, criteria):
-        """Return an encoded query value."""
-        if not isinstance(criteria, dict):
-            raise TypeError("query criteria must be of type dict")
-        if not criteria:
-            return None
-        encoded = OrderedDict()
-        for name, value in criteria.iteritems():
-            if name in self.document._meta.fields:
-                value = self.field(name, value)
-            elif isinstance(value, dict):
-                value = self.encode(value)
-            elif isinstance(value, (tuple, list, set)):
-                value = [self.encode(item) for item in value]
-            encoded[name] = value
-        return encoded
 
 
 class Query(object):
