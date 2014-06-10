@@ -208,7 +208,8 @@ class Document(object):
 
     def __init__(self, *args, **kwargs):
         """Initialize the document with values."""
-        self._attrs.update(kwargs)
+        for name, value in kwargs.iteritems():
+            setattr(self, name, value)
 
     def _encode(self, update=False):
         """
