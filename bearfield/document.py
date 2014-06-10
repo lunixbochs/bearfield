@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 class UpdateEncoder(object):
     """Encode update specs."""
-    scalars = {
+    scalar_ops = {
         '$inc',
         '$mul',
         '$setOnInsert',
@@ -19,35 +19,28 @@ class UpdateEncoder(object):
         '$addToSet',
     }
 
-    lists = {
+    list_ops = {
         '$pullAll',
         '$pushAll',
     }
 
-    queries = {
+    query_ops = {
         '$pull',
     }
 
-    ignored = {
-        '$rename',
-        '$currentDate',
-        '$pop',
-        '$bit',
-    }
-
-    with_options = {
+    option_ops = {
         '$pull',
-        '$assToSet',
+        '$addToSet',
     }
 
-    options = {
+    valid_options = {
         '$each',
         '$slice',
         '$sort',
         '$position',
     }
 
-    convert = {
+    convert_ops = {
         '$rename': str,
         '$pop': int,
         '$position': int,
@@ -68,7 +61,7 @@ class UpdateEncoder(object):
 
     def options(self, name, value):
         """Return encoded $push or $addToSet value."""
-        if isinstance(value, dict) and set(value.keys()) - self.options == set():
+        if isinstance(value, dict) and set(value.keys()) - self.valid_options == set():
             encoded = OrderedDict()
             for option, values in value.iteritems():
                 if option == '$each':
@@ -101,16 +94,16 @@ class UpdateEncoder(object):
             if isinstance(values, dict):
                 encoded_values = OrderedDict()
                 for name, value in values.iteritems():
-                    if update in self.with_options:
+                    if update in self.option_ops:
                         value = self.options(name, value)
-                    elif update in self.scalars:
+                    elif update in self.scalar_ops:
                         value = self.field(name, value)
-                    elif update in self.lists:
+                    elif update in self.list_ops:
                         value = self.list(name, value)
-                    elif update in self.queries:
+                    elif update in self.query_ops:
                         value = self.query(name, value)
-                    elif update in self.convert:
-                        value = self.convert[update](value)
+                    elif update in self.convert_ops:
+                        value = self.convert_ops[update](value)
                     encoded_values[name] = value
             encoded[update] = encoded_values
         return encoded
