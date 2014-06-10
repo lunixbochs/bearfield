@@ -39,7 +39,7 @@ class TestField(unittest.TestCase):
         """Field.validate"""
         def validate(cls, name, value):
             if value != "validate":
-                raise errors.ValidationError(cls, name, value)
+                raise errors.ValidationError(None, cls, name, value)
 
         field = Field(str, strict=False)
         field.ensure(validate)

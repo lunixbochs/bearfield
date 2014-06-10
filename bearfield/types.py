@@ -139,7 +139,8 @@ class BuiltinType(FieldType):
         try:
             return self.builtin(value)
         except (TypeError, ValueError) as e:
-            raise EncodingError(cls, name, value, True, e)
+            msg = "failed to encode value as {}".format(self.builtin.__name__)
+            raise EncodingError(msg, cls, name, value, True)
 
 
 class DateType(FieldType):
@@ -152,13 +153,13 @@ class DateType(FieldType):
         if is_date_obj(value):
             value = datetime.combine(value, time(0))
         if not is_datetime_obj(value):
-            raise EncodingError(cls, name, value, True)
+            raise EncodingError(None, cls, name, value, True)
         return value
 
     def decode(self, cls, name, value):
         """Return the date value from the stored datetime."""
         if not is_datetime_obj(value):
-            raise EncodingError(cls, name, value, False)
+            raise EncodingError(None, cls, name, value, False)
         return value.date()
 
 
@@ -172,13 +173,13 @@ class DateTimeType(FieldType):
         elif is_time_obj(value):
             value = datetime.combine(epoch, value)
         elif not is_datetime_obj(value):
-            raise EncodingError(cls, name, value, True)
+            raise EncodingError(None, cls, name, value, True)
         return value
 
     def decode(self, cls, name, value):
         """Return the datetime value for the stored value."""
         if not is_datetime_obj(value):
-            raise EncodingError(cls, name, value, False)
+            raise EncodingError(None, cls, name, value, False)
         return value
 
 
@@ -192,14 +193,14 @@ class TimeType(FieldType):
         if is_time_obj(value):
             value = datetime.combine(epoch, value)
         else:
-            raise EncodingError(cls, name, value, True)
+            raise EncodingError(None, cls, name, value, True)
         return value
 
     def decode(self, cls, name, value):
         """Return the time value from the stored datetime."""
         if is_datetime_obj(value):
             return value.time()
-        raise EncodingError(cls, name, value, False)
+        raise EncodingError(None, cls, name, value, False)
 
 
 class DocumentType(FieldType):
@@ -213,13 +214,13 @@ class DocumentType(FieldType):
         """Return the value encoded as a raw subdocument."""
         if is_document_obj(value):
             return value._encode()
-        raise EncodingError(cls, name, value, True)
+        raise EncodingError(None, cls, name, value, True)
 
     def decode(self, cls, name, value):
         """Return the value decoded as a subdocument object."""
         if hasattr(value, 'get'):
             return self.document._decode(value)
-        raise EncodingError(cls, name, value, False)
+        raise EncodingError(None, cls, name, value, False)
 
     def validate(self, cls, name, value):
         """Raise ValidationError if the field fails to validate."""

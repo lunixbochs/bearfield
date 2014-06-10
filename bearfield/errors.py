@@ -13,7 +13,8 @@ class DocumentError(Error):
     """Base class for all document related errors."""
     message = "document error"
 
-    def __init__(self, message=None, document=None, field=None, value=None):
+    @classmethod
+    def format(self, message=None, document=None, field=None, value=None):
         """Format a document or field error message."""
         message = message or self.message
         if document:
@@ -22,20 +23,26 @@ class DocumentError(Error):
             elif isinstance(document, object):
                 document = document.__class__.__name__
             if field:
-                message = "{}.{} = {}: {}".format(document, field, repr(value), message)
+                message = "{}: {}.{} = {}".format(message, document, field, repr(value))
             else:
-                message = "{}: {}".format(document, message)
+                message = "{}: {}".format(message, document)
+        elif field and value:
+            message = "{}: {} = {}".format(message, field, repr(value))
+        elif field:
+            message = "{}: {}".format(message, field)
+        elif value:
+            message = "{}: {}".format(message, repr(value))
         super(DocumentError, self).__init__(message)
 
 
 class OperationError(DocumentError):
     """Raised when an operation fails for a document."""
-    message = "failed to execute operation on document"
+    message = "operation failed"
 
 
 class ValidationError(DocumentError):
     """Raised when document or field validation fails."""
-    message = "failed to validate document value"
+    message = "value not validated"
 
 
 class EncodingError(DocumentError):
@@ -43,8 +50,7 @@ class EncodingError(DocumentError):
     encode_message = "failed to encode value"
     decode_message = "failed to decode value"
 
-    def __init__(self, document, field, value, encode, message=None):
-        errormsg = encode and self.encode_message or self.decode_message
-        if message:
-            errormsg = "{}: {}".format(errormsg, message)
-        super(EncodingError, self).__init__(errormsg, document, field, value)
+    def __init__(self, message=None, document=None, field=None, value=None, encode=True):
+        """Format an encoding error message."""
+        self.message = encode and self.encode_message or self.decode_message
+        super(EncodingError, self).__init__(message, document, field, value)
