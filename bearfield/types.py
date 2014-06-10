@@ -130,7 +130,7 @@ class BuiltinType(FieldType):
 
     def __init__(self, builtin):
         """Create a field type using the given builtin type."""
-        if issubclass(builtin, basestring):
+        if isinstance(builtin, type) and issubclass(builtin, basestring):
             builtin = unicode
         self.builtin = builtin
 
@@ -317,6 +317,6 @@ register_field_type(is_date_type, DateType)
 register_field_type(is_datetime_type, DateTimeType)
 register_field_type(is_time_type, TimeType)
 register_field_type(is_document_type, DocumentType)
-register_field_type(is_list_type, ListType)
+register_field_type(lambda t: is_list_type(t) or is_list_obj(t), ListType)
 register_field_type(is_set_type, SetType)
 register_field_type(is_dict_type, DictType)

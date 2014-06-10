@@ -269,6 +269,13 @@ class TestDocumentType(unittest.TestCase):
 class TestListType(unittest.TestCase):
     """Test the ListType class."""
 
+    def test_field(self):
+        """Field(list)"""
+        field = Field([str])
+        self.assertIsInstance(field.typ, types.ListType)
+        self.assertIsInstance(field.typ.typ, types.BuiltinType)
+        self.assertEqual(field.typ.typ.builtin, unicode)
+
     def test_encode(self):
         """ListType.encode"""
         items = ('1', '2', 3)
