@@ -29,7 +29,7 @@ class UpdateEncoder(object):
     }
 
     option_ops = {
-        '$pull',
+        '$push',
         '$addToSet',
     }
 
