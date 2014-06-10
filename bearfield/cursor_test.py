@@ -1,11 +1,8 @@
 """Tests for the cursor module."""
-import unittest
-from bearfield import cursor, Connection, Document, Field, Query
-
-uri = 'mongodb://localhost/test'
+from bearfield import cursor, test, Connection, Document, Field, Query
 
 
-class TestCursor(unittest.TestCase):
+class TestCursor(test.TestCase):
     """Test the Cursor class."""
 
     class Document(Document):
@@ -15,8 +12,8 @@ class TestCursor(unittest.TestCase):
         name = Field(str)
 
     def setUp(self):
-        self.con = Connection(uri)
-        self.collection = self.con['cursor']
+        super(TestCursor, self).setUp()
+        self.collection = self.connection['cursor']
         self.docs = [
             {'index': 1, 'name': 'first'},
             {'index': 2, 'name': 'second'},
@@ -25,15 +22,10 @@ class TestCursor(unittest.TestCase):
         for doc in self.docs:
             doc['_id'] = self.collection.insert(doc)
 
-    def tearDown(self):
-        name = self.con.database.name
-        self.con.client.drop_database(name)
-        self.con.close()
-
     def test_connection(self):
         """Cursor.connection"""
         cur = cursor.Cursor(self.Document(), self.collection, None, None)
-        self.assertEqual(cur.connection, self.con, "cursor connection is incorrect")
+        self.assertEqual(cur.connection, self.connection, "cursor connection is incorrect")
 
     def test_find(self):
         """Cursor.find"""
