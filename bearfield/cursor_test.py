@@ -24,7 +24,7 @@ class TestCursor(test.TestCase):
 
     def test_connection(self):
         """Cursor.connection"""
-        cur = cursor.Cursor(self.Document(), self.collection, None, None)
+        cur = cursor.Cursor(self.Document(), self.collection, None, None, False)
         self.assertEqual(cur.connection, self.connection, "cursor connection is incorrect")
 
     def test_find(self):
@@ -33,13 +33,13 @@ class TestCursor(test.TestCase):
         q2 = Query({'name': 'first'})
         qr = q1 & q2
 
-        cur = cursor.Cursor(self.Document(), self.collection, q1, None)
+        cur = cursor.Cursor(self.Document(), self.collection, q1, None, False)
         cur = cur.find(q2)
         self.assertEqual(cur.query.criteria, qr.criteria, "cursor has invalid criteria")
 
     def test_getitem(self):
         """Cursor.__getitem___"""
-        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None)
+        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None, False)
         doc = cur[0]
         have = doc._encode()
         want = {'_id': doc._id}
@@ -48,13 +48,13 @@ class TestCursor(test.TestCase):
 
     def test_iter(self):
         """Cursor.__iter__"""
-        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None)
+        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None, False)
         it = cur.__iter__()
         self.assertIsInstance(it, cursor.Cursor, "returned value has invalid type")
 
     def test_close(self):
         """Cursor.close"""
-        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None)
+        cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None, False)
         cur.close()
         len(cur)
         cur.close()

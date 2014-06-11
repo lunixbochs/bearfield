@@ -8,7 +8,7 @@ class Cursor(object):
     find().
     """
 
-    def __init__(self, document, collection, query, fields, **options):
+    def __init__(self, document, collection, query, fields, raw, **options):
         """
         Initialize the cursor with the given find query. The find will be executed against the
         given connection. Additional args are passed to pymongo's find().
@@ -17,6 +17,7 @@ class Cursor(object):
         self.collection = collection
         self.query = self._make_query(query)
         self.fields = fields
+        self.raw = raw
         self.options = options
         self.options.pop('manipulate', None)
 
@@ -31,7 +32,7 @@ class Cursor(object):
         """Return the encoded criteria for the cursor."""
         if self.query is None:
             return None
-        return self.query.encode(self.document)
+        return self.query.encode(self.document, self.raw)
 
     @property
     def connection(self):
@@ -49,7 +50,7 @@ class Cursor(object):
     def find(self, query):
         """Refine the cursor's scope with an additional query. Return a new cursor."""
         query = self.query & self._make_query(query)
-        return Cursor(self.document, self.collection, query, self.fields, **self.options)
+        return Cursor(self.document, self.collection, query, self.fields, self.raw, **self.options)
 
     def remove(self):
         """Remove the documents matched by this cursor."""

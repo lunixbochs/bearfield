@@ -28,8 +28,10 @@ class Query(object):
         """Return a copy of the query."""
         return Query(deepcopy(self.criteria))
 
-    def encode(self, document):
+    def encode(self, document, raw=None):
         """Return the encoded query in the context of the given document."""
+        if raw:
+            return self.criteria
         return QueryEncoder(document).encode(self.criteria)
 
     def _op(self, op, query):

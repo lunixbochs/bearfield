@@ -59,7 +59,7 @@ class Document(object):
             raise ValidationError("{} is missing required fields: {}".format(doc, required))
 
     @classmethod
-    def find(cls, query=None, fields=None, connection=None, **options):
+    def find(cls, query=None, fields=None, connection=None, raw=None, **options):
         """
         Query the database for documents. Return a cursor for further refining or iterating over
         the results. If fields is not None only return the field values in that list. Additional
@@ -67,10 +67,10 @@ class Document(object):
         """
         collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
-        return Cursor(cls, collection, query, fields, **options)
+        return Cursor(cls, collection, query, fields, raw, **options)
 
     @classmethod
-    def find_one(cls, query=None, fields=None, connection=None, **options):
+    def find_one(cls, query=None, fields=None, connection=None, raw=None, **options):
         """
         Query the database for a single document. Return the document or None if not found.
         Additional args are passed to pymongo's find(). If fields is not None only return the field
@@ -79,11 +79,11 @@ class Document(object):
         collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
         options.pop('manipulate', None)
-        criteria = Query(query).encode(cls)
+        criteria = Query(query).encode(cls, raw)
         return cls._decode(collection.find_one(criteria, fields=fields, **options), fields)
 
     @classmethod
-    def find_and_modify(cls, query, update, fields=None, connection=None, **options):
+    def find_and_modify(cls, query, update, fields=None, connection=None, raw=None, **options):
         """
         Query the database for a document, update it, then return the old document before
         modification. Additional args are passed to pymongo's find_and_modify().
@@ -91,8 +91,9 @@ class Document(object):
         collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
         options.pop('new', None)
-        criteria = Query(query).encode(cls)
-        update = UpdateEncoder(cls).encode(update)
+        criteria = Query(query).encode(cls, raw)
+        if not raw:
+            update = UpdateEncoder(cls).encode(update)
         raw = collection.find_and_modify(criteria, update, fields=fields, new=False, **options)
         return cls._decode(raw, fields)
 
@@ -172,7 +173,7 @@ class Document(object):
         self._id = collection.insert(raw, manipulate=True, **options)
         self._reset(raw)
 
-    def update(self, update=None, connection=None, **options):
+    def update(self, update=None, connection=None, raw=None, **options):
         """
         Update the document in the database using the provided update statement. If update is None
         (the default) an update statement is created to set all of the dirty fields in the
@@ -186,7 +187,8 @@ class Document(object):
         collection = self._meta.get_collection(connection)
 
         if update:
-            update = UpdateEncoder(self.__class__).encode(update)
+            if not raw:
+                update = UpdateEncoder(self.__class__).encode(update)
             reset = False
         else:
             update = self._encode(True)
