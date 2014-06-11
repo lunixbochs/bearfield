@@ -11,6 +11,14 @@ class BaseEncoder(object):
         """Create an encoder for the given document."""
         self.document = document
 
+    def is_array_value(self, value):
+        """Return True if the value can be encoded to an array."""
+        return isinstance(value, (list, tuple, set))
+
+    def is_array_field(self, field):
+        """Return True if a field stores an array."""
+        return isinstance(field.typ, ListType)
+
     def encode_default(self, name, value):
         """Return a value with default encoding."""
         return value
@@ -98,8 +106,7 @@ class QueryEncoder(BaseEncoder):
                         encoded_value.append(item)
                     value = encoded_value
                 elif comparison in self.scalars:
-                    if (isinstance(field.typ, ListType) and
-                            not isinstance(value, (list, tuple, set))):
+                    if self.is_array_field(field) and not self.is_array_value(value):
                         value = field.typ.encode_element(self.document, name, value)
                     else:
                         value = field.encode(self.document, name, value)
@@ -196,13 +203,13 @@ class UpdateEncoder(BaseEncoder):
         """Encode an array update value."""
         field = self.get_field(name)
         if field:
-            if isinstance(values, (list, tuple, set)):
-                if isinstance(field.typ, ListType):
+            if self.is_array_value(values):
+                if self.is_array_field(field):
                     values = field.encode(self.document, name, values)
                 else:
                     values = [field.encode(self.document, name, value) for value in values]
             else:
-                if isinstance(field.typ, ListType):
+                if self.is_array_field(field):
                     values = field.typ.encode_element(self.document, name, values)
                 else:
                     values = field.encode(self.document, name, values)
@@ -214,7 +221,7 @@ class UpdateEncoder(BaseEncoder):
         """Encode an array element update value."""
         field = self.get_field(name)
         if field:
-            if isinstance(field.typ, ListType):
+            if self.is_array_field(field):
                 return field.typ.encode_element(self.document, name, value)
             else:
                 return field.typ.encode(self.document, name, value)
