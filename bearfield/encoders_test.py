@@ -6,6 +6,17 @@ from collections import OrderedDict
 from datetime import date, datetime, time
 
 
+def sortdict(items):
+    """Recursively sort a dictionary by keys."""
+    ordered = OrderedDict()
+    for key in sorted(items.keys()):
+        value = items[key]
+        if isinstance(value, dict):
+            value = sortdict(value)
+        ordered[key] = value
+    return ordered
+
+
 class ForUpdate(Document):
     number = Field(int)
     text = Field(str)
@@ -27,9 +38,11 @@ class ForString(object):
 class TestUpdateEncoder(unittest.TestCase):
     """Test UpdateEncoder class."""
 
-    def test_operators(self):
-        """UpdateEncoder Scalars"""
-        def test(op, field, update_value, want_value=None):
+    def test_encode(self):
+        """UpdateEncoder.encode"""
+        def test(op, field, update_value, want_value):
+            if isinstance(update_value, dict):
+                update_value = sortdict(update_value)
             value = {op: {field: update_value}}
             enc = encoders.UpdateEncoder(ForUpdate)
             if isinstance(want_value, type) and issubclass(want_value, Exception):
@@ -61,6 +74,13 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$set', 'array', (1, 2), [1, 2])
         test('$set', 'array', (1, '2'), [1, 2])
         test('$set', 'array', (1, 'nope'), EncodingError)
+        test('$set', 'array.$', 1, 1)
+        test('$set', 'array.$', '1', 1)
+        test('$set', 'array.$', 'nope', EncodingError)
+        test('$set', 'text.$', '1', '1')
+        test('$set', 'text.$', 1, '1')
+        test('$set', 'nope.$', 1, 1)
+        test('$set', 'nope', 'string', 'string')
         test('$unset', 'date', '', '')
         test('$unset', 'date', date(2014, 1, 1), '')
         test('$unset', 'number', 3, '')
@@ -77,9 +97,42 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$pullAll', 'array', [1, 2], [1, 2])
         test('$pullAll', 'array', [1, '2'], [1, 2])
         test('$pullAll', 'array', [1, 'nope'], EncodingError)
+        test('$pullAll', 'array', 1, 1)
+        test('$pullAll', 'array', '1', 1)
+        test('$pullAll', 'array', 'nope', EncodingError)
+        test('$pullAll', 'nope', [1, 2], [1, 2])
+        test('$pullAll', 'text', ['1', 'two'], ['1', 'two'])
+        test('$pullAll', 'text', [1, 'two'], ['1', 'two'])
+        test('$pullAll', 'text', '1', '1')
+        test('$pullAll', 'text', 1, '1')
         test('$pushAll', 'array', [1, 2], [1, 2])
         test('$pushAll', 'array', [1, '2'], [1, 2])
         test('$pushAll', 'array', [1, 'nope'], EncodingError)
+        test('$pushAll', 'array', 1, 1)
+        test('$pushAll', 'array', '1', 1)
+        test('$pushAll', 'array', 'nope', EncodingError)
+        test('$pushAll', 'nope', [1, 2], [1, 2])
+        test('$pushAll', 'text', ['1', 'two'], ['1', 'two'])
+        test('$pushAll', 'text', [1, 'two'], ['1', 'two'])
+        test('$pushAll', 'text', '1', '1')
+        test('$pushAll', 'text', 1, '1')
+
+        want = OrderedDict([('$each', [1, 2]), ('$sort', 1)])
+        test('$push', 'array', {'$each': [1, 2], '$sort': 1}, want)
+        test('$push', 'array', {'$each': [1, '2'], '$sort': 1}, want)
+        test('$push', 'array', {'$each': [1, '2'], '$sort': '1'}, want)
+        want = OrderedDict([('$each', [1, 2]), ('$sort', OrderedDict([('value', 1)]))])
+        test('$push', 'array', {'$each': [1, 2], '$sort': {'value': 1}}, want)
+        test('$push', 'array', {'$each': [1, '2'], '$sort': {'value': 1}}, want)
+        test('$push', 'array', {'$each': [1, 2], '$sort': {'value': '1'}}, want)
+        test('$push', 'array', {'$each': [1, '2'], '$sort': {'value': '1'}}, want)
+        test('$push', 'array', {'$each': [1, 'nope'], '$sort': {'value': '1'}}, EncodingError)
+        test('$push', 'array', {'$each': [1, 1], '$sort': {'value': 'nope'}}, EncodingError)
+        test('$push', 'array', {'$each': [1, 2], '$sort': 'nope'}, EncodingError)
+        want = OrderedDict([('$each', [1, 2]), ('$position', 0), ('$slice', 1), ('$sort', 1)])
+        test('$push', 'array', {'$each': [1, 2], '$position': 0, '$slice': 1, '$sort': 1}, want)
+        want = OrderedDict([('$nope', 32)])
+        test('$push', 'array', {'$nope': 32}, want)
         test('$push', 'array', 1, 1)
         test('$push', 'array', '1', 1)
         test('$push', 'array', 'nope', EncodingError)
@@ -88,6 +141,7 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$bit', 'number', OrderedDict([('and', 5)]), want)
         test('$bit', 'number', OrderedDict([('and', '5')]), want)
         test('$bit', 'number', OrderedDict([('and', 'nope')]), EncodingError)
+        test('$bit', 'number', 12, EncodingError)
 
         want = OrderedDict([('array', OrderedDict([('$gte', 5)]))])
         test('$pull', 'array', {'array': {'$gte': 5}}, want)
@@ -98,6 +152,8 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$addToSet', 'array', {'$each': [1, 2]}, want)
         test('$addToSet', 'array', {'$each': [1, '2']}, want)
         test('$addToSet', 'array', {'$each': [1, 'none']}, EncodingError)
+        want = OrderedDict([('$each', [1, 2]), ('$slice', 'nope')])
+        test('$addToSet', 'array', {'$each': [1, 2], '$slice': 'nope'}, want)
         test('$addToSet', 'array', 1, 1)
         test('$addToSet', 'array', '1', 1)
         test('$addToSet', 'array', 'nope', EncodingError)
@@ -105,7 +161,14 @@ class TestUpdateEncoder(unittest.TestCase):
         want = OrderedDict([('$type', 'timestamp')])
         test('$currentDate', 'date', {'$type': 'timestamp'}, want)
         test('$currentDate', 'date', {'$type': ForString('timestamp')}, want)
+        want = OrderedDict([('$nope', 'datetime')])
+        test('$currentDate', 'date', {'$nope': 'datetime'}, want)
         test('$currentDate', 'date', True, True)
         test('$currentDate', 'date', False, False)
         test('$currentDate', 'date', 'yes', True)
         test('$currentDate', 'date', '', False)
+
+        test('$nope', 'text', 'string', 'string')
+
+        self.assertIsNone(encoders.UpdateEncoder(ForUpdate).encode(None))
+        self.assertRaises(EncodingError, encoders.UpdateEncoder(ForUpdate).encode, 'nope')

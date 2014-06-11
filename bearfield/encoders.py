@@ -13,21 +13,28 @@ class SortEncoder(object):
 
     def encode(self, value):
         """
-        Encode a sort value. Value must be convertible to an OrderedDict or raises an
+        Encode a sort value. Value must be convertible to an int or OrderedDict or raises an
         EncodingError.
         """
         try:
             value = OrderedDict(value)
-        except ValueError:
-            raise EncodingError('unable to encode sort value', value=value)
+            encoded = OrderedDict()
+            for field, direction in value.iteritems():
+                try:
+                    encoded[str(field)] = int(direction)
+                except (TypeError, ValueError):
+                    raise EncodingError(
+                        'unable to encode sort field', field=field, value=direction)
+            return encoded
+        except (TypeError, ValueError):
+            pass
 
-        encoded = OrderedDict()
-        for field, direction in value.iteritems():
-            try:
-                encoded[str(field)] = int(direction)
-            except ValueError:
-                raise EncodingError('unable to encode sort field', field=field, value=direction)
-        return encoded
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            pass
+
+        raise EncodingError('unable to encode sort value', value=value)
 
 
 class QueryEncoder(object):
@@ -75,10 +82,13 @@ class QueryEncoder(object):
 
     def encode(self, criteria):
         """Return an encoded query value."""
-        if not isinstance(criteria, dict):
-            raise TypeError("query criteria must be of type dict")
         if not criteria:
             return None
+        try:
+            criteria = OrderedDict(criteria)
+        except (TypeError, ValueError):
+            raise TypeError("query criteria type must be OrderedDict")
+
         encoded = OrderedDict()
         for name, value in criteria.iteritems():
             if name in self.document._meta.fields:
@@ -117,10 +127,19 @@ class UpdateEncoder(object):
         """Create an encoder for the given document class."""
         self.document = document
 
+    def is_positional(self, name):
+        """Return True if the field name has a positional operator attached."""
+        return name[-2:] == '.$'
+
+    def get_field_name(self, name):
+        """Return a clean field name."""
+        if self.is_positional(name):
+            return name[:-2]
+        return name
+
     def get_field(self, name):
-        """Return a field on the document."""
-        if name[-2:] == '.$':
-            name = name[:-2]
+        """Return a named document field."""
+        name = self.get_field_name(name)
         return self.document._meta.fields.get(name)
 
     def get_encode_method(self, op):
@@ -138,6 +157,8 @@ class UpdateEncoder(object):
 
     def encode_scalar(self, name, value):
         """Encode a scalar update value."""
+        if self.is_positional(name):
+            return self.encode_array_element(name, value)
         field = self.get_field(name)
         if field:
             return field.encode(self.document, name, value)
@@ -149,17 +170,20 @@ class UpdateEncoder(object):
 
     def encode_array(self, name, values):
         """Encode an array update value."""
-        if isinstance(values, (list, tuple, set)):
-            field = self.get_field(name)
-            if field:
+        field = self.get_field(name)
+        if field:
+            if isinstance(values, (list, tuple, set)):
                 if isinstance(field.typ, ListType):
                     values = field.encode(self.document, name, values)
                 else:
                     values = [field.encode(self.document, name, value) for value in values]
             else:
-                values = list(values)
+                if isinstance(field.typ, ListType):
+                    values = field.typ.encode_element(self.document, name, values)
+                else:
+                    values = field.encode(self.document, name, values)
         else:
-            values = self.encode_default(name, value)
+            values = self.encode_default(name, values)
         return values
 
     def encode_array_element(self, name, value):
@@ -231,16 +255,11 @@ class UpdateEncoder(object):
             value = bool(value)
         return value
 
-    def encode_array_projection(self, name, value):
-        """Encode an array projection."""
-        name = name.rsplit('.', 2)[0]
-        return self.encode_array_element(name, value)
-
     def encode_bitwise(self, name, value):
         """Encode a bitwise value."""
         try:
             value = OrderedDict(value)
-        except ValueError:
+        except (TypeError, ValueError):
             raise EncodingError("unable to encode bitwise value", self.document, name, value)
 
         encoded = OrderedDict()
@@ -256,7 +275,7 @@ class UpdateEncoder(object):
         """Encode a value as an integer."""
         try:
             return int(value)
-        except ValueError:
+        except (TypeError, ValueError):
             raise EncodingError("unable to encode integer value", self.document, name, value)
 
     def encode(self, value):
@@ -265,7 +284,7 @@ class UpdateEncoder(object):
             return None
         try:
             value = OrderedDict(value)
-        except ValueError:
+        except (TypeError, ValueError):
             raise EncodingError("unable to encode update", self.document, '<update>', value=value)
 
         encoded = OrderedDict()
