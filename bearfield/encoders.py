@@ -23,20 +23,24 @@ class BaseEncoder(object):
         """Return a value with default encoding."""
         return value
 
+    def encode_builtin(self, builtin, name, value):
+        try:
+            return builtin(value)
+        except (TypeError, ValueError):
+            msg = "unable to encode {} value".format(builtin.__name__)
+            raise EncodingError(msg, self.document, name, value)
+
     def encode_int(self, name, value):
         """Return a value encoded as an integer."""
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            raise EncodingError("unable to encode integer value", self.document, name, value)
+        return self.encode_builtin(int, name, value)
 
     def encode_bool(self, name, value):
         """Return a value encoded as a boolean."""
-        return bool(value)
+        return self.encode_builtin(bool, name, value)
 
     def encode_str(self, name, value):
         """Return a value encoded as a string."""
-        return str(value)
+        return self.encode_builtin(str, name, value)
 
 
 class SortEncoder(BaseEncoder):
