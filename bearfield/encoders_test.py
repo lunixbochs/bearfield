@@ -35,6 +35,53 @@ class ForString(object):
         return str(self.value)
 
 
+class TestSortEncoder(unittest.TestCase):
+    """Test SortEncoder class."""
+
+    def test_encode(self):
+        """SortEncoder.encode"""
+        def test(value, want):
+            enc = encoders.SortEncoder()
+            if isinstance(want, type) and issubclass(want, Exception):
+                self.assertRaises(want, enc.encode, value)
+            else:
+                have = enc.encode(value)
+                if want is None:
+                    self.assertIsNone(have)
+                else:
+                    self.assertEqual(have, want)
+
+        # one field
+        want = OrderedDict([('index', 1)])
+        test({'index': 1}, want)
+        test({'index': '1'}, want)
+        test({'index': 'nope'}, EncodingError)
+
+        # two fields
+        want = OrderedDict([('index', 1), ('name', -1)])
+        test({'index': 1, 'name': -1}, want)
+        test({'index': '1', 'name': -1}, want)
+        test({'index': '1', 'name': '-1'}, want)
+        test({'index': 1, 'name': '-1'}, want)
+        test({'index': 1, 'name': 'nope'}, EncodingError)
+        test({'index': 'nope', 'name': -1}, EncodingError)
+        test({'index': 'nope', 'name': 'nope'}, EncodingError)
+
+        # no fields
+        want = OrderedDict()
+        test({}, want)
+
+        # None
+        test(None, None)
+
+        # bad dictionary
+        test('nope', EncodingError)
+
+
+class TestQueryEncoder(unittest.TestCase):
+    """Test QueryEncoder class."""
+
+
 class TestUpdateEncoder(unittest.TestCase):
     """Test UpdateEncoder class."""
 

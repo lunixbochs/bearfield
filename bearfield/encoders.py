@@ -7,15 +7,14 @@ from collections import OrderedDict
 class SortEncoder(object):
     """Encode sort specs."""
 
-    def __init__(self, document):
-        """Create an encoder for the given document class."""
-        self.document = document
-
     def encode(self, value):
         """
         Encode a sort value. Value must be convertible to an int or OrderedDict or raises an
         EncodingError.
         """
+        if value is None:
+            return None
+
         try:
             value = OrderedDict(value)
             encoded = OrderedDict()
@@ -212,7 +211,7 @@ class UpdateEncoder(object):
 
     def encode_sort(self, name, value):
         """Encode a sort spec."""
-        return SortEncoder(self.document).encode(value)
+        return SortEncoder().encode(value)
 
     def encode_push(self, name, value):
         """Encode a push update value."""
