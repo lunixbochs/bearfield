@@ -34,6 +34,10 @@ class BaseEncoder(object):
         """Return a value encoded as an integer."""
         return self.encode_builtin(int, name, value)
 
+    def encode_float(self, name, value):
+        """Return a value encoded as a float."""
+        return self.encode_builtin(float, name, value)
+
     def encode_bool(self, name, value):
         """Return a value encoded as a boolean."""
         return self.encode_builtin(bool, name, value)
@@ -41,6 +45,53 @@ class BaseEncoder(object):
     def encode_str(self, name, value):
         """Return a value encoded as a string."""
         return self.encode_builtin(str, name, value)
+
+    def encode_geojson_coords(self, name, value):
+        """Return a value encoded as GeoJSON coordinates."""
+        if not self.is_array_value(value):
+            return self.encode_float(name, value)
+
+        encoded = []
+        for item in value:
+            encoded.append(self.encode_geojson_coords(name, item))
+        return encoded
+
+    def encode_geojson(self, name, value):
+        """Return a value encoded as a GeoJSON value."""
+        try:
+            value = OrderedDict(value)
+        except (TypeError, ValueError):
+            msg = "unable to encode value as GeoJSON"
+            raise EncodingError(msg, self.document, name, value)
+
+        encoded = OrderedDict()
+        for item_name, item_value in value.iteritems():
+            if item_name == 'type':
+                item_value = self.encode_str(item_name, item_value)
+            elif item_name == 'coordinates':
+                item_value = self.encode_geojson_coords(item_name, item_value)
+            else:
+                item_value = self.encode_default(item_name, item_value)
+            encoded[item_name] = item_value
+        return encoded
+
+
+class OperatorEncoder(BaseEncoder):
+    """Base encoder for specs with operators."""
+    ops = {}
+
+    def get_encode_method(self, op):
+        """Return the encode method for an operator."""
+        name = self.ops.get(op)
+        if name:
+            name = 'encode_' + name
+            if hasattr(self, name):
+                return getattr(self, name)
+        return self.encode_default
+
+    def get_field(self, name):
+        """Return the field for the given name."""
+        return self.document._meta.get_field(name)
 
 
 class SortEncoder(BaseEncoder):
@@ -58,13 +109,9 @@ class SortEncoder(BaseEncoder):
             value = OrderedDict(value)
             encoded = OrderedDict()
             for field, direction in value.iteritems():
-                try:
-                    direction = self.encode_int(field, direction)
-                    field = self.encode_str(field, field)
-                    encoded[field] = direction
-                except (TypeError, ValueError):
-                    raise EncodingError(
-                        'unable to encode sort field', field=field, value=direction)
+                direction = self.encode_int(field, direction)
+                field = self.encode_str(field, field)
+                encoded[field] = direction
             return encoded
         except (TypeError, ValueError):
             pass
@@ -77,70 +124,170 @@ class SortEncoder(BaseEncoder):
         raise EncodingError('unable to encode sort value', value=value)
 
 
-class QueryEncoder(BaseEncoder):
+class QueryEncoder(OperatorEncoder):
     """Encode query specs."""
-    scalars = {
-        '$gt',
-        '$gte',
-        '$lt',
-        '$lte',
-        '$ne',
-    }
 
-    lists = {
-        '$in',
-        '$nin',
+    ops = {
+        '$gt': 'field',
+        '$gte': 'field',
+        '$lt': 'field',
+        '$lte': 'field',
+        '$ne': 'field',
+        '$in': 'field',
+        '$nin': 'field',
+        '$or': 'logical',
+        '$and': 'logical',
+        '$not': 'negation',
+        '$nor': 'logical',
+        '$exists': 'bool',
+        '$type': 'int',
+        '$mod': 'mod',
+        '$regex': 'str',
+        '$options': 'str',
+        '$search': 'str',
+        '$language': 'str',
+        '$where': 'str',
+        '$all': 'field',
+        '$elemMatch': 'array_query',
+        '$size': 'int',
+        '$geoWithin': 'geo',
+        '$geoIntersects': 'geo',
+        '$near': 'geo',
+        '$nearSphere': 'geo',
     }
 
     def __init__(self, document):
-        """Create an encoder for the given document class."""
+        """Create a query encoder for a document type."""
         self.document = document
 
-    def field(self, name, value):
-        """Return the encoded query value for the given field."""
-        field = self.document._meta.fields[name]
-        if isinstance(value, dict):
-            encoded = OrderedDict()
-            for comparison, value in value.iteritems():
-                if comparison in self.lists:
-                    encoded_value = []
-                    for item in value:
-                        if item is not None:
-                            item = field.encode(self.document, name, item)
-                        encoded_value.append(item)
-                    value = encoded_value
-                elif comparison in self.scalars:
-                    if self.is_array_field(field) and not self.is_array_value(value):
-                        value = field.typ.encode_element(self.document, name, value)
-                    else:
-                        value = field.encode(self.document, name, value)
-                encoded[comparison] = value
-        else:
-            encoded = field.encode(self.document, name, value)
-        return encoded
+    def is_operator_name(self, name):
+        """Return True if the name is an operator name."""
+        return str(name)[:1] == '$'
 
-    def encode(self, criteria):
-        """Return an encoded query value."""
-        if not criteria:
-            return None
+    def is_operator_value(self, value):
+        """Return True if a value contains operators."""
         try:
-            criteria = OrderedDict(criteria)
+            value = OrderedDict(value)
+            for name in value.keys():
+                if self.is_operator_name(name):
+                    return True
         except (TypeError, ValueError):
-            raise TypeError("query criteria type must be OrderedDict")
+            pass
+        return False
+
+    def is_compiled_regex(self, value):
+        """Return True if a value is a compiled regular expression."""
+        return hasattr(value, 'pattern')
+
+    def encode_logical(self, name, value):
+        """Return a value encoded for a logical operator."""
+        if not self.is_array_value(value):
+            raise EncodingError("unable to encode logical operator", field=name, value=value)
+        return [self.encode(v) for v in value]
+
+    def encode_negation(self, name, value):
+        """Return a value encoded for negation."""
+        return self.encode(value)
+
+    def encode_mod(self, name, value):
+        """Return a value encoded for modulus division."""
+        if not self.is_array_value(value):
+            raise EncodingError("unable to encode mod operator", field=name, value=value)
+        return [self.encode_float(name, v) for v in value]
+
+    def encode_array_query(self, name, value):
+        """Return a value encoded as an array."""
+        from .types import DocumentType
+        field = self.get_field(name)
+        if field and self.is_array_field(field) and isinstance(field.typ.typ, DocumentType):
+            document = field.typ.typ.document
+        else:
+            from .document import Document
+            document = Document
+        return QueryEncoder(document).encode(value)
+
+    def encode_geo(self, name, value):
+        """Return a value encoded as a geo query."""
+        try:
+            value = OrderedDict(value)
+        except (TypeError, ValueError):
+            raise EncodingError("unable to encode geo query", self.document, name, value)
 
         encoded = OrderedDict()
-        for name, value in criteria.iteritems():
-            if name in self.document._meta.fields:
-                value = self.field(name, value)
-            elif isinstance(value, dict):
-                value = self.encode(value)
-            elif isinstance(value, (tuple, list, set)):
-                value = [self.encode(item) for item in value]
-            encoded[name] = value
+        for item_name, item_value in value.iteritems():
+            if item_name == '$geometry':
+                item_value = self.encode_geojson(item_name, item_value)
+            elif item_name == '$maxDistance':
+                item_value = self.encode_int(item_name, item_value)
+            else:
+                item_value = self.encode_default(item_name, item_value)
+            encoded[item_name] = item_value
+        return encoded
+
+    def encode_field(self, name, value):
+        """Return a value encoded as a field value."""
+        if value is None:
+            return None
+        if self.is_compiled_regex(value):
+            return self.encode_default(name, value)
+
+        field = self.get_field(name)
+        if field:
+            if self.is_array_value(value):
+                if self.is_array_field(field):
+                    value = field.encode(self.document, name, value)
+                else:
+                    value = [field.encode(self.document, name, v) for v in value]
+            else:
+                if self.is_array_field(field):
+                    value = field.typ.encode_element(self.document, name, value)
+                else:
+                    value = field.encode(self.document, name, value)
+        else:
+            value = self.encode_default(name, value)
+        return value
+
+    def encode_operator(self, name, value):
+        """Return a value encoded as an operator dictionary."""
+        if value is None:
+            return None
+        encode_method = self.get_encode_method(name)
+        return encode_method(name, value)
+
+    def encode_operators(self, name, value):
+        """Return a value encoded as an operator dictionary."""
+        encoded = OrderedDict()
+        for item_name, item_value in value.iteritems():
+            item_name = self.encode_str(name, item_name)
+            if item_value is not None:
+                encode_method = self.get_encode_method(item_name)
+                item_value = encode_method(name, item_value)
+            encoded[item_name] = item_value
+        return encoded
+
+    def encode(self, value):
+        """Return an encoded query value."""
+        if not value:
+            return None
+        try:
+            value = OrderedDict(value)
+        except (TypeError, ValueError):
+            raise EncodingError("unable to encode query", self.document, '<query>', value)
+
+        encoded = OrderedDict()
+        for item_name, item_value in value.iteritems():
+            item_name = self.encode_str('<query>', item_name)
+            if self.is_operator_name(item_name):
+                item_value = self.encode_operator(item_name, item_value)
+            if self.is_operator_value(item_value):
+                item_value = self.encode_operators(item_name, item_value)
+            else:
+                item_value = self.encode_field(item_name, item_value)
+            encoded[item_name] = item_value
         return encoded
 
 
-class UpdateEncoder(BaseEncoder):
+class UpdateEncoder(OperatorEncoder):
     """Encode update specs."""
 
     ops = {
@@ -179,16 +326,7 @@ class UpdateEncoder(BaseEncoder):
     def get_field(self, name):
         """Return a named document field."""
         name = self.get_field_name(name)
-        return self.document._meta.get_field(name)
-
-    def get_encode_method(self, op):
-        """Return the encode method for an update operator."""
-        name = self.ops.get(op)
-        if name:
-            name = 'encode_' + name
-            if hasattr(self, name):
-                return getattr(self, name)
-        return self.encode_default
+        return super(UpdateEncoder, self).get_field(name)
 
     def encode_scalar(self, name, value):
         """Encode a scalar update value."""

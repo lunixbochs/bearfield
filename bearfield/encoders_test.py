@@ -1,4 +1,5 @@
 """Test encoders module."""
+import re
 import unittest
 from bearfield import Document, Field, encoders
 from bearfield.errors import EncodingError
@@ -17,13 +18,21 @@ def sortdict(items):
     return ordered
 
 
+class Subdocument(Document):
+    index = Field(int)
+    name = Field(str)
+
+
 class ForEncoders(Document):
+    boolean = Field(bool)
     number = Field(int)
     text = Field(str)
     date = Field(date)
     datetime = Field(datetime)
     time = Field(time)
     array = Field([int])
+    sub = Field(Subdocument)
+    subarray = Field([Subdocument])
 
 
 class ForString(object):
@@ -80,6 +89,182 @@ class TestSortEncoder(unittest.TestCase):
 
 class TestQueryEncoder(unittest.TestCase):
     """Test QueryEncoder class."""
+
+    def test_encode(self):
+        """QueryEncoder.encode"""
+        def test(value, want):
+            enc = encoders.QueryEncoder(ForEncoders)
+            if isinstance(want, type) and issubclass(want, Exception):
+                self.assertRaises(want, enc.encode, value)
+            else:
+                if isinstance(value, dict):
+                    value = sortdict(value)
+                have = enc.encode(value)
+                if want is None:
+                    self.assertIsNone(have)
+                else:
+                    self.assertEqual(have, want)
+
+        # test simple query (single field, multiple fields)
+        test(None, None)
+        want = OrderedDict([('number', 1)])
+        test({'number': 1}, want)
+        test({'number': '1'}, want)
+        test({'number': 'one'}, EncodingError)
+        want = OrderedDict([('number', None)])
+        test({'number': None}, want)
+        want = OrderedDict([('boolean', True)])
+        test({'boolean': True}, want)
+        test({'boolean': 1}, want)
+        test({'boolean': 'yes'}, want)
+        want = OrderedDict([('boolean', False)])
+        test({'boolean': False}, want)
+        test({'boolean': 0}, want)
+        test({'boolean': ''}, want)
+        want = OrderedDict([('number', 1), ('text', 'here')])
+        test({'number': 1, 'text': 'here'}, want)
+        test({'number': '1', 'text': 'here'}, want)
+        test({'number': 'nope', 'text': 'here'}, EncodingError)
+        want = OrderedDict([('array', [1, 2, 3])])
+        test({'array': [1, 2, 3]}, want)
+        test({'array': [1, 2, '3']}, want)
+        test({'array': [1, 2, 'nope']}, EncodingError)
+
+        # test field operators
+        want = OrderedDict([('number', OrderedDict([('$gt', 1)]))])
+        test({'number': {'$gt': 1}}, want)
+        test({'number': {'$gt': 1.9}}, want)
+        test({'number': {'$gt': '1'}}, want)
+        test({'number': {'$gt': 'nope'}}, EncodingError)
+        want = OrderedDict([('number', OrderedDict([('$gt', None)]))])
+        test({'number': {'$gt': None}}, want)
+
+        # test logical operators
+        want = OrderedDict([
+            ('$and', [
+                OrderedDict([('number', 3)]),
+                OrderedDict([('text', 'value')]),
+            ])])
+        test({'$and': [{'number': 3}, {'text': 'value'}]}, want)
+        test({'$and': [{'number': '3'}, {'text': 'value'}]}, want)
+        test({'$and': [{'number': 'nope'}, {'text': 'value'}]}, EncodingError)
+        test({'$and': {'number': {'$gt': 5}}}, EncodingError)
+        want = OrderedDict([('$and', None)])
+        test({'$and': None}, want)
+
+        # test negation
+        want = OrderedDict([('$not', OrderedDict([('number', 5)]))])
+        test({'$not': {'number': 5}}, want)
+        test({'$not': {'number': '5'}}, want)
+        test({'$not': {'number': 'nope'}}, EncodingError)
+
+        # test mod operator
+        want = OrderedDict([('number', OrderedDict([('$mod', [12.3, 3.1])]))])
+        test({'number': {'$mod': [12.3, 3.1]}}, want)
+        test({'number': {'$mod': ['12.3', 3.1]}}, want)
+        test({'number': {'$mod': [12.3, '3.1']}}, want)
+        test({'number': {'$mod': ['12.3', '3.1']}}, want)
+        test({'number': {'$mod': ['12.3', 'nope']}}, EncodingError)
+        test({'number': {'$mod': 12.3}}, EncodingError)
+
+        # test geo operator
+        want = OrderedDict([
+            ('index', OrderedDict([
+                ('$near', OrderedDict([
+                    ('$geometry', OrderedDict([
+                        ('coordinates', [1.3, 4.5]),
+                        ('nope',  5),
+                        ('type', 'Point'),
+                    ])),
+                    ('$maxDistance', 1500),
+                    ('$nope', 5),
+                ])),
+            ])),
+        ])
+        value = lambda x, y, z: {
+            'index': {
+                '$near': {
+                    '$geometry': {
+                        'coordinates': [x, y],
+                        'type': 'Point',
+                        'nope': 5,
+                    },
+                    '$maxDistance': z,
+                    '$nope': 5,
+                }
+            }
+        }
+        test(value(1.3, 4.5, 1500), want)
+        test(value(1.3, '4.5', 1500), want)
+        test(value('1.3', 4.5, '1500'), want)
+        test(value('1.3', '4.5', '1500'), want)
+        test(value('nope', 4.5, 1500), EncodingError)
+        test(value('1.3', 'nope', 1500), EncodingError)
+        test(value('1.3', 4.5, 'nope'), EncodingError)
+        test({'index': {'$near': {'$geometry': [1.3, 4.5]}}}, EncodingError)
+        test({'index': {'$near': [1.3, 4.5]}}, EncodingError)
+
+        # test array element match
+        want = OrderedDict([
+            ('subarray', OrderedDict([
+                ('$elemMatch', OrderedDict([
+                    ('index', 15),
+                    ('name', 'value'),
+                ])),
+            ])),
+        ])
+        test({'subarray': {'$elemMatch': {'index': 15, 'name': 'value'}}}, want)
+        test({'subarray': {'$elemMatch': {'index': '15', 'name': 'value'}}}, want)
+        test({'subarray': {'$elemMatch': {'index': 'nope', 'name': 'value'}}}, EncodingError)
+        want = OrderedDict([
+            ('nope', OrderedDict([
+                ('$elemMatch', OrderedDict([
+                    ('index', '15'),
+                    ('name', 'value'),
+                ])),
+            ])),
+        ])
+        test({'nope': {'$elemMatch': {'index': '15', 'name': 'value'}}}, want)
+
+        # test element operators
+        want = OrderedDict([
+            ('nope', OrderedDict([
+                ('$exists', True),
+            ])),
+        ])
+        test({'nope': {'$exists': True}}, want)
+        test({'nope': {'$exists': 1}}, want)
+        test({'nope': {'$exists': 'yes'}}, want)
+
+        want = OrderedDict([
+            ('text', OrderedDict([
+                ('$type', 2),
+            ])),
+        ])
+        test({'text': {'$type': 2}}, want)
+        test({'text': {'$type': '2'}}, want)
+        test({'text': {'$type': 'nope'}}, EncodingError)
+
+        # test regex operator
+        want = OrderedDict([('text', re.compile('^value$'))])
+        test({'text': re.compile('^value$')}, want)
+
+        want = OrderedDict([
+            ('text', OrderedDict([
+                ('$options', 'i'),
+                ('$regex', '^value$'),
+            ])),
+        ])
+        test({'text': {'$regex': '^value$', '$options': 'i'}}, want)
+
+        # test empty values
+        enc = encoders.QueryEncoder(ForEncoders)
+        self.assertIsNone(enc.encode(None))
+        self.assertIsNone(enc.encode(''))
+        self.assertIsNone(enc.encode({}))
+        self.assertIsNone(enc.encode([]))
+        self.assertIsNone(enc.encode(OrderedDict()))
+        self.assertRaises(EncodingError, enc.encode, 'nope')
 
 
 class TestUpdateEncoder(unittest.TestCase):
