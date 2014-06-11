@@ -107,6 +107,25 @@ class DocumentMeta(object):
             return {k: self.fields[k] for k in partial if k in self.fields}
         return self.fields
 
+    def get_field(self, name):
+        """Return the named field. Supports dot syntax to retrieve fields from subdocuments."""
+        from .types import DocumentType
+        names = name.split('.')
+        names.reverse()
+        doc = self.cls
+        field = None
+
+        while len(names):
+            name = names.pop()
+            field = doc._meta.fields.get(name)
+            if not field or not isinstance(field.typ, DocumentType):
+                break
+            doc = field.typ.document
+
+        if len(names):
+            return None
+        return field
+
 
 class DocumentBuilder(type):
     """Metaclass for building document classes."""

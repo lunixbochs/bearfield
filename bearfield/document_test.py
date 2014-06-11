@@ -1,5 +1,5 @@
 """Test document module."""
-from bearfield import Field, Q, document, errors, test
+from bearfield import Field, Q, document, errors, test, types
 from datetime import datetime
 
 
@@ -265,3 +265,13 @@ class TestPartialDocument(test.TestCase):
         have = doc._encode()
         self.assertEquals(have, want, "found document is incorrect")
         self.remove(Partial)
+
+    def test_get_field(self):
+        """Document._meta.get_field"""
+        field = TopDocument._meta.get_field('sub')
+        self.assertIsNotNone(field)
+        self.assertIsInstance(field.typ, types.DocumentType)
+
+        field = TopDocument._meta.get_field('sub.name')
+        self.assertIsNotNone(field)
+        self.assertIsInstance(field.typ, types.BuiltinType)
