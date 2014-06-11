@@ -13,8 +13,7 @@ class DocumentError(Error):
     """Base class for all document related errors."""
     message = "document error"
 
-    @classmethod
-    def format(self, message=None, document=None, field=None, value=None):
+    def __init__(self, message=None, document=None, field=None, value=None):
         """Format a document or field error message."""
         message = message or self.message
         if document:
