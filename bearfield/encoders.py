@@ -139,7 +139,7 @@ class UpdateEncoder(object):
     def get_field(self, name):
         """Return a named document field."""
         name = self.get_field_name(name)
-        return self.document._meta.fields.get(name)
+        return self.document._meta.get_field(name)
 
     def get_encode_method(self, op):
         """Return the encode method for an update operator."""
