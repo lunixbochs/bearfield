@@ -17,7 +17,7 @@ def sortdict(items):
     return ordered
 
 
-class ForUpdate(Document):
+class ForEncoders(Document):
     number = Field(int)
     text = Field(str)
     date = Field(date)
@@ -41,7 +41,7 @@ class TestSortEncoder(unittest.TestCase):
     def test_encode(self):
         """SortEncoder.encode"""
         def test(value, want):
-            enc = encoders.SortEncoder()
+            enc = encoders.SortEncoder(ForEncoders)
             if isinstance(want, type) and issubclass(want, Exception):
                 self.assertRaises(want, enc.encode, value)
             else:
@@ -91,7 +91,7 @@ class TestUpdateEncoder(unittest.TestCase):
             if isinstance(update_value, dict):
                 update_value = sortdict(update_value)
             value = {op: {field: update_value}}
-            enc = encoders.UpdateEncoder(ForUpdate)
+            enc = encoders.UpdateEncoder(ForEncoders)
             if isinstance(want_value, type) and issubclass(want_value, Exception):
                 self.assertRaises(want_value, enc.encode, value)
             else:
@@ -217,5 +217,5 @@ class TestUpdateEncoder(unittest.TestCase):
 
         test('$nope', 'text', 'string', 'string')
 
-        self.assertIsNone(encoders.UpdateEncoder(ForUpdate).encode(None))
-        self.assertRaises(EncodingError, encoders.UpdateEncoder(ForUpdate).encode, 'nope')
+        self.assertIsNone(encoders.UpdateEncoder(ForEncoders).encode(None))
+        self.assertRaises(EncodingError, encoders.UpdateEncoder(ForEncoders).encode, 'nope')

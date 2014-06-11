@@ -4,7 +4,34 @@ from .types import ListType
 from collections import OrderedDict
 
 
-class SortEncoder(object):
+class BaseEncoder(object):
+    """Base encoder class."""
+
+    def __init__(self, document):
+        """Create an encoder for the given document."""
+        self.document = document
+
+    def encode_default(self, name, value):
+        """Return a value with default encoding."""
+        return value
+
+    def encode_int(self, name, value):
+        """Return a value encoded as an integer."""
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            raise EncodingError("unable to encode integer value", self.document, name, value)
+
+    def encode_bool(self, name, value):
+        """Return a value encoded as a boolean."""
+        return bool(value)
+
+    def encode_str(self, name, value):
+        """Return a value encoded as a string."""
+        return str(value)
+
+
+class SortEncoder(BaseEncoder):
     """Encode sort specs."""
 
     def encode(self, value):
@@ -20,7 +47,9 @@ class SortEncoder(object):
             encoded = OrderedDict()
             for field, direction in value.iteritems():
                 try:
-                    encoded[str(field)] = int(direction)
+                    direction = self.encode_int(field, direction)
+                    field = self.encode_str(field, field)
+                    encoded[field] = direction
                 except (TypeError, ValueError):
                     raise EncodingError(
                         'unable to encode sort field', field=field, value=direction)
@@ -36,7 +65,7 @@ class SortEncoder(object):
         raise EncodingError('unable to encode sort value', value=value)
 
 
-class QueryEncoder(object):
+class QueryEncoder(BaseEncoder):
     """Encode query specs."""
     scalars = {
         '$gt',
@@ -100,7 +129,7 @@ class QueryEncoder(object):
         return encoded
 
 
-class UpdateEncoder(object):
+class UpdateEncoder(BaseEncoder):
     """Encode update specs."""
 
     ops = {
@@ -149,10 +178,6 @@ class UpdateEncoder(object):
             if hasattr(self, name):
                 return getattr(self, name)
         return self.encode_default
-
-    def encode_default(self, name, value):
-        """Default encoder for unrecognized data."""
-        return value
 
     def encode_scalar(self, name, value):
         """Encode a scalar update value."""
@@ -211,7 +236,7 @@ class UpdateEncoder(object):
 
     def encode_sort(self, name, value):
         """Encode a sort spec."""
-        return SortEncoder().encode(value)
+        return SortEncoder(self.document).encode(value)
 
     def encode_push(self, name, value):
         """Encode a push update value."""
@@ -265,17 +290,6 @@ class UpdateEncoder(object):
         for item_name, item_value in value.iteritems():
             encoded[str(item_name)] = self.encode_int(name, item_value)
         return encoded
-
-    def encode_str(self, name, value):
-        """Encode a value as a string."""
-        return str(value)
-
-    def encode_int(self, name, value):
-        """Encode a value as an integer."""
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            raise EncodingError("unable to encode integer value", self.document, name, value)
 
     def encode(self, value):
         """Return an encoded update value."""
