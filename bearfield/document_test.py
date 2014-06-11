@@ -84,6 +84,17 @@ class TestDocument(test.TestCase):
         self.assertFalse(doc.update(), "noop update did not return false")
         self.validate_save('with_fields', doc, raw)
 
+        doc = WithFields(index=5, name='the fourth', optional='yes')
+        doc.save()
+        print(doc._id)
+        self.assertTrue(
+            doc.update(
+                {'$set': {'name': 'the fifth'}, '$unset': {'optional': ''}}),
+                "operational update did not return true")
+        print(doc._attrs)
+        print(raw)
+        self.validate_save('with_fields', doc, raw)
+
     def test_remove(self):
         """Document.remove"""
         doc = WithFields(index=3, name='the third')

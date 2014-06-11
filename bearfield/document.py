@@ -186,22 +186,19 @@ class Document(object):
 
         collection = self._meta.get_collection(connection)
 
-        if update:
-            if not raw:
-                update = UpdateEncoder(self.__class__).encode(update)
-            reset = False
-        else:
+        if not update:
             update = self._encode(True)
-            reset = True
+        elif not raw:
+            update = UpdateEncoder(self.__class__).encode(update)
 
         self._validate(update.get('$set', {}), self._partial, True)
         if update:
             options.pop('multi', None)
+            options.pop('new', None)
             options.pop('fields', None)
-            self._attrs = collection.find_and_modify(
-                {'_id': self._id}, update, fields=self._partial, multi=False, **options)
-            if reset:
-                self._reset(update, True)
+            self._attrs.update(collection.find_and_modify(
+                {'_id': self._id}, update, fields=self._partial, multi=False, new=True, **options))
+            self._reset(update, True)
             return True
         return False
 
