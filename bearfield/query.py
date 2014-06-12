@@ -20,7 +20,7 @@ class Query(object):
         elif not isinstance(criteria, OrderedDict):
             try:
                 criteria = OrderedDict(criteria)
-            except ValueError:
+            except (TypeError, ValueError):
                 raise TypeError("invalid query value {}".format(repr(criteria)))
         self.criteria = criteria
 

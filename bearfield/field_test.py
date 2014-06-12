@@ -1,12 +1,44 @@
 """Tests for the field module."""
 import unittest
 from datetime import date, datetime, time
-from bearfield import errors
-from bearfield.field import Field
+from bearfield import document, errors
+from bearfield.field import BaseField, Field
+
+
+class ForFields(document.Document):
+    date = Field(date)
 
 
 class TestField(unittest.TestCase):
     """Test Field class."""
+
+    def test_base(self):
+        dt = datetime.now().date()
+        doc = ForFields(date=dt)
+        field = BaseField()
+        self.assertEqual(field.encode(doc, 'date', doc.date), dt)
+        self.assertEqual(field.decode(doc, 'date', doc.date), dt)
+
+    def test_getter(self):
+        """Field.getter"""
+        dt = datetime.now().date()
+        doc = ForFields(date=dt)
+        field = ForFields._meta.get_field('date')
+
+        self.assertEqual(field.getter(doc, 'date'), dt)
+        doc._reset({'date': 'five'})
+        self.assertRaises(TypeError, field.getter, doc, 'date')
+
+    def test_setter(self):
+        """Field.setter"""
+        dt = datetime.now().date()
+        doc = ForFields(date=dt)
+        field = ForFields._meta.get_field('date')
+
+        field.setter(doc, 'date', dt)
+        self.assertIsNone(doc._raw['date'])
+        self.assertEqual(doc._attrs['date'], dt)
+        self.assertTrue('date' in doc._dirty)
 
     def test_encode(self):
         """Field.encode"""

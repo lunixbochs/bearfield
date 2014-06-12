@@ -286,3 +286,6 @@ class TestPartialDocument(test.TestCase):
         field = TopDocument._meta.get_field('sub.name')
         self.assertIsNotNone(field)
         self.assertIsInstance(field.typ, types.BuiltinType)
+
+        field = TopDocument._meta.get_field('sub.name.nope')
+        self.assertIsNone(field)
