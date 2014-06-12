@@ -69,5 +69,11 @@ class Query(object):
         """Logical or. Calls qor()."""
         return self._op('$or', query)
 
+    def __eq__(self, query):
+        """Return True if the query is equal to this one."""
+        if isinstance(query, Query):
+            return self.criteria == query.criteria
+        return False
+
 
 Q = Query

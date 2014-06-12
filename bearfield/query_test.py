@@ -126,6 +126,17 @@ class TestQuery(unittest.TestCase):
         c1 = OrderedDict([])
         self.assertEqual(query.Query(c1).negate().criteria, c1, "negated query is incorrect")
 
+    def test_eq(self):
+        """Query.__eq__"""
+        c1 = {'name': 'nope'}
+        c2 = {'name': 'yep'}
+        self.assertTrue(query.Query(c1).__eq__(query.Query(c1)))
+        self.assertTrue(query.Query(None).__eq__(query.Query(None)))
+        self.assertTrue(query.Query({}).__eq__(query.Query({})))
+        self.assertFalse(query.Query(c1).__eq__(query.Query(c2)))
+        self.assertFalse(query.Query(c1).__eq__(object()))
+        self.assertFalse(query.Query(c1).__eq__(None))
+
     def test_q(self):
         """Q == Query."""
         self.assertEqual(query.Q, query.Query, "shorthand query is incorrectly set")
