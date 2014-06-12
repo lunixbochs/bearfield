@@ -98,6 +98,46 @@ class because it is not associated with a collection. Using it is still easy:
     grizzly = BearType(name='grizzly', avg_height=9.3, colors={'brown'})
     bear = Bear(name='timmy', type=grizzly, height=10.3)
 
+On the other hand it might make more sense to keep our BearTypes in their own collection. We can
+use references to make accessing the associated type easy. References are associated with a
+document model and may store an ObjectId or Query. We'll redefine our documents like this:
+
+    from bearfield import Reference
+
+    class BearType(Document):
+        class Meta:
+            connection = 'test'
+
+        name = Field(str)
+        avg_height = Field(int)
+        colors = Field({str})
+
+    class Bear(Document):
+        class Meta:
+            connection = 'example'
+
+        name = Field(str)
+        type = Reference(BearType)
+        height = Field(float)
+
+Creating the bear is similar. The only difference is that the grizzly type needs to be saved in the
+database before setting it on the bear document:
+
+    grizzly = BearType(name='grizzly', avg_height=9.3, colors={'brown'})
+    grizzly.save()
+    bear = Bear(name='timmy', type=grizzly, height=10.3)
+
+References use find and find_one methods to retrieve the object. References are designed this way
+so that you, the user, don't anger any bears by executing queries you don't know about.
+
+    type = bear.type.find_one()
+
+Remember that we can also set References to query values. We can query by name to accomplish the
+same as above:
+
+    bear.type = {'name': 'grizzly'}
+    type = bear.type.find_one()
+
 See, bears like it when things are easy.
 
 License
