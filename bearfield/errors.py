@@ -23,11 +23,11 @@ class DocumentError(Error):
                 document = document.__class__.__name__
             if field:
                 message = "{}: {}.{} = {}".format(message, document, field, repr(value))
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 message = "{}: {}".format(message, document)
         elif field and value:
             message = "{}: {} = {}".format(message, field, repr(value))
-        elif field: # pragma: no cover
+        elif field:  # pragma: no cover
             message = "{}: {}".format(message, field)
         elif value:
             message = "{}: {}".format(message, repr(value))

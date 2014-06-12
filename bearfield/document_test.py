@@ -88,9 +88,8 @@ class TestDocument(test.TestCase):
         doc.save()
         print(doc._id)
         self.assertTrue(
-            doc.update(
-                {'$set': {'name': 'the fifth'}, '$unset': {'optional': ''}}),
-                "operational update did not return true")
+            doc.update({'$set': {'name': 'the fifth'}, '$unset': {'optional': ''}}),
+            "operational update did not return true")
         print(doc._attrs)
         print(raw)
         self.validate_save('with_fields', doc, raw)
