@@ -1,6 +1,6 @@
 """Document and subdocument classes."""
 from .cursor import Cursor
-from .encoders import UpdateEncoder
+from .encoders import SortEncoder, UpdateEncoder
 from .errors import OperationError, ValidationError
 from .meta import DocumentBuilder
 from .query import Query
@@ -59,7 +59,7 @@ class Document(object):
             raise ValidationError("{} is missing required fields: {}".format(doc, required))
 
     @classmethod
-    def find(cls, query=None, fields=None, connection=None, raw=None, **options):
+    def find(cls, query=None, fields=None, connection=None, raw=None, sort=None, **options):
         """
         Query the database for documents. Return a cursor for further refining or iterating over
         the results. If fields is not None only return the field values in that list. Additional
@@ -67,10 +67,12 @@ class Document(object):
         """
         collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
-        return Cursor(cls, collection, query, fields, raw, **options)
+        if not raw:
+            sort = SortEncoder(cls).encode(sort)
+        return Cursor(cls, collection, query, fields, raw, sort=sort, **options)
 
     @classmethod
-    def find_one(cls, query=None, fields=None, connection=None, raw=None, **options):
+    def find_one(cls, query=None, fields=None, connection=None, raw=None, sort=None, **options):
         """
         Query the database for a single document. Return the document or None if not found.
         Additional args are passed to pymongo's find(). If fields is not None only return the field
@@ -80,10 +82,13 @@ class Document(object):
         fields = cls._meta.get_partial(fields)
         options.pop('manipulate', None)
         criteria = Query(query).encode(cls, raw)
-        return cls._decode(collection.find_one(criteria, fields=fields, **options), fields)
+        if not raw:
+            sort = SortEncoder(cls).encode(sort)
+        return cls._decode(collection.find_one(criteria, fields=fields, sort=sort, **options), fields)
 
     @classmethod
-    def find_and_modify(cls, query, update, fields=None, connection=None, raw=None, **options):
+    def find_and_modify(cls, query, update, fields=None, connection=None, raw=None, sort=None,
+                        **options):
         """
         Query the database for a document, update it, then return the old document before
         modification. Additional args are passed to pymongo's find_and_modify().
@@ -93,8 +98,10 @@ class Document(object):
         options.pop('new', None)
         criteria = Query(query).encode(cls, raw)
         if not raw:
+            sort = SortEncoder(cls).encode(sort)
             update = UpdateEncoder(cls).encode(update)
-        raw = collection.find_and_modify(criteria, update, fields=fields, new=False, **options)
+        raw = collection.find_and_modify(criteria, update, fields=fields, new=False, sort=sort,
+                                         **options)
         return cls._decode(raw, fields)
 
     def __init__(self, *args, **kwargs):
@@ -173,7 +180,7 @@ class Document(object):
         self._id = collection.insert(raw, manipulate=True, **options)
         self._reset(raw)
 
-    def update(self, update=None, connection=None, raw=None, **options):
+    def update(self, update=None, connection=None, raw=None, sort=None, **options):
         """
         Update the document in the database using the provided update statement. If update is None
         (the default) an update statement is created to set all of the dirty fields in the
@@ -186,6 +193,9 @@ class Document(object):
 
         collection = self._meta.get_collection(connection)
 
+        if not raw:
+            sort = SortEncoder(self.__class__).encode(sort)
+
         if not update:
             update = self._encode(True)
         elif not raw:
@@ -197,7 +207,8 @@ class Document(object):
             options.pop('new', None)
             options.pop('fields', None)
             self._attrs.update(collection.find_and_modify(
-                {'_id': self._id}, update, fields=self._partial, multi=False, new=True, **options))
+                {'_id': self._id}, update, fields=self._partial, multi=False, new=True, sort=sort,
+                **options))
             self._reset(update, True)
             return True
         return False
