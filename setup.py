@@ -8,8 +8,8 @@ install_requires = [
     'pymongo>=2.7.0',
 ]
 setup_requires = [
-    "coverage>=3.7.0",
-    "nose>=1.3.0",
+    'coverage>=3.7.0',
+    'nose>=1.3.0',
 ]
 
 setup(
