@@ -1,6 +1,5 @@
 """Framework errors."""
 
-
 class Error(Exception):
     """Base error type."""
 
@@ -41,7 +40,7 @@ class OperationError(DocumentError):
 
 class ValidationError(DocumentError):
     """Raised when document or field validation fails."""
-    message = "value not validated"
+    message = "value is invalid"
 
 
 class EncodingError(DocumentError):

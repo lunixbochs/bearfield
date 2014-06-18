@@ -55,7 +55,7 @@ class Field(BaseField):
 
     def __init__(self, typ, require=True, default=None, strict=True):
         """
-        Initialize a new field. typ is the type of the field and may be a FieldType of a built-in
+        Initialize a new field. typ is the type of the field and may be a FieldType or a built-in
         Python type. require is a boolean that indicates whether or not the field is required.
         default is the default value to be stored if the field's value is None. strict determines
         whether or not type conversion and validation should occur during storage and retrieval of

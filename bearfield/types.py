@@ -1,4 +1,4 @@
-"""Define additional field types that require encodeing and/or decoding."""
+"""Define field types that may be encoded and/or decoded."""
 from collections import OrderedDict
 from datetime import date, datetime, time
 from errors import EncodingError
