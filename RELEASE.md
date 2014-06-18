@@ -1,3 +1,7 @@
+## v1.2 - setuptools
+* Make setup.py work properly when installing from source
+* Minor docstring updates.
+
 ## v1.1 - References
 + Add support for Reference fields.
 + Extend test coverage to 100%.
