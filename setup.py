@@ -2,7 +2,11 @@ import os
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-readme = os.path.join(here, 'README.md')
+
+try:
+    readme = open(os.path.join(here, 'README.md')).read()
+except IOError:
+    readme = ''
 
 install_requires = [
     'pymongo>=2.7.0',
@@ -16,7 +20,7 @@ setup(
     name='bearfield',
     version='1.1',
     description="Small MongoDB object layer.",
-    long_description=open(readme).read(),
+    long_description=readme,
     classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
