@@ -4,3 +4,4 @@
 *.sw?
 .coverage
 .venv
+/dist
