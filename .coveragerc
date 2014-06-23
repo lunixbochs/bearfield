@@ -1,2 +1,2 @@
 [run]
-omit = */bson*,*/ctypes*,*/encodings*,*/hmac*,*/pymongo*,*/uuid*,*/common*
+include = bearfield*
