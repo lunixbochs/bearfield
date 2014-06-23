@@ -1,5 +1,6 @@
 """Tests for the reference module."""
-from bearfield import Document, Field, Query, reference, test
+import common
+from bearfield import Document, Field, Query, reference
 from bearfield.cursor import Cursor
 from collections import OrderedDict
 
@@ -19,7 +20,7 @@ class Parent(Document):
     child = reference.Reference(Child, require=False)
 
 
-class TestReference(test.TestCase):
+class TestReference(common.TestCase):
     """Test Reference class."""
 
     def test_getter(self):

@@ -1,5 +1,6 @@
 """Test document module."""
-from bearfield import Field, Q, document, errors, test, types
+import common
+from bearfield import Field, Q, document, errors, types
 from datetime import datetime
 
 
@@ -45,7 +46,7 @@ class Partial(document.Document):
     type = Field(str)
 
 
-class TestDocument(test.TestCase):
+class TestDocument(common.TestCase):
     """Test Document class."""
 
     def validate_save(self, collection, document, raw):
@@ -215,7 +216,7 @@ class TestDocument(test.TestCase):
         self.assertIsNone(raw.get('name'), "encoded value is incorrect")
 
 
-class TestPartialDocument(test.TestCase):
+class TestPartialDocument(common.TestCase):
     """Test partial Document objects."""
     def test_save(self):
         """Document.save (partial)"""

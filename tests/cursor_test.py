@@ -1,8 +1,9 @@
 """Tests for the cursor module."""
-from bearfield import cursor, test, Document, Field, Query
+import common
+from bearfield import cursor, Document, Field, Query
 
 
-class TestCursor(test.TestCase):
+class TestCursor(common.TestCase):
     """Test the Cursor class."""
 
     class Document(Document):
