@@ -53,7 +53,7 @@ class BaseField(object):
 class Field(BaseField):
     """A field object defines how a document field behaves."""
 
-    def __init__(self, typ, require=True, default=None, strict=True):
+    def __init__(self, typ, require=False, default=None, strict=True):
         """
         Initialize a new field. typ is the type of the field and may be a FieldType or a built-in
         Python type. require is a boolean that indicates whether or not the field is required.
