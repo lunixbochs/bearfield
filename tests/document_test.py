@@ -15,8 +15,8 @@ class WithFields(document.Document):
 class WithDate(document.Document):
     class Meta:
         connection = 'test'
-    index = Field(int)
-    timestamp = Field(datetime)
+    index = Field(int, require=True)
+    timestamp = Field(datetime, require=True)
 
 
 class WithCollection(document.Document):

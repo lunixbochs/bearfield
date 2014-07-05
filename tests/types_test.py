@@ -230,8 +230,8 @@ class TestDocumentType(unittest.TestCase):
     """Test the DocumentType class."""
 
     class Doc(Document):
-        index = Field(int)
-        name = Field(str)
+        index = Field(int, require=True)
+        name = Field(str, require=True)
 
     def test_encode(self):
         """DocumentType.encode"""
