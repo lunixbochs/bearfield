@@ -93,6 +93,10 @@ class Document(object):
         Query the database for a document, update it, then return the old document before
         modification. Additional args are passed to pymongo's find_and_modify().
         """
+        if cls._meta.disable_update:
+            msg = "updates to {} are disabled".format(cls.__class__.__name__)
+            raise OperationError(msg)
+
         collection = cls._meta.get_collection(connection)
         fields = cls._meta.get_partial(fields)
         options.pop('new', None)
@@ -157,8 +161,13 @@ class Document(object):
         Save the model to the database. Effectively performs an insert if the _id field is None and
         a full document update otherwise. Additional args are passed to pymongo's save().
         """
+        if self._meta.disable_save:
+            msg = "saves to {} are disabled".format(self.__class__.__name__)
+            raise OperationError(msg)
+
         if self._partial:
             raise OperationError("unable to save partial document")
+
         collection = self._meta.get_collection(connection)
         raw = self._encode()
         self._validate(raw, self._partial)
@@ -173,6 +182,10 @@ class Document(object):
         insert the same document into multiple databases. Additional args are passed to pymongo's
         insert().
         """
+        if self._meta.disable_insert:
+            msg = "inserts to {} are disabled".format(self.__class__.__name__)
+            raise OperationError(msg)
+
         collection = self._meta.get_collection(connection)
         raw = self._encode()
         self._validate(raw, self._partial)
@@ -188,6 +201,10 @@ class Document(object):
         no _id is set. Additional args are passed to pymongo's update(). Return True if an update
         was performed or False if no update was needed.
         """
+        if self._meta.disable_update:
+            msg = "updates to {} are disabled".format(self.__class__.__name__)
+            raise OperationError(msg)
+
         if not self._id:
             raise OperationError("unable to update document without an _id")
 
@@ -218,6 +235,10 @@ class Document(object):
         Remove the document from the database. Additional args are passed to pymongo's remove().
         Return True if the document was removed or False if there was nothing to remove.
         """
+        if self._meta.disable_remove:
+            msg = "removal of {} is disabled".format(self.__class__.__name__)
+            raise OperationError(msg)
+
         collection = self._meta.get_collection(connection)
         if self._id:
             res = collection.remove(self._id)

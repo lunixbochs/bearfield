@@ -4,6 +4,19 @@ from bearfield import Field, Q, document, errors, types
 from datetime import datetime
 
 
+def create_document(base=None, **options):
+    """Return a document class with the given meta options."""
+    attrs = {'Meta': type('Meta', (object,), options)}
+    if not base:
+        base = document.Document
+        attrs.update({
+            'index': Field(int),
+            'name': Field(str),
+        })
+
+    return type('CreatedDocument', (base,), attrs)
+
+
 class WithFields(document.Document):
     class Meta:
         connection = 'test'
@@ -66,12 +79,28 @@ class TestDocument(common.TestCase):
         doc.save()
         self.validate_save('with_fields', doc, raw)
 
+        cls = create_document(WithFields, readonly=True)
+        doc = cls(index=3, name='the third')
+        self.assertRaises(errors.OperationError, doc.save)
+
+        cls = create_document(WithFields, disable_save=True)
+        doc = cls(index=3, name='the third')
+        self.assertRaises(errors.OperationError, doc.save)
+
     def test_insert(self):
         """Document.insert"""
         raw = {'index': 1, 'name': 'the first'}
         doc = WithFields(index=1, name='the first')
         doc.insert()
         self.validate_save('with_fields', doc, raw)
+
+        cls = create_document(WithFields, readonly=True)
+        doc = cls(index=1, name='the first')
+        self.assertRaises(errors.OperationError, doc.insert)
+
+        cls = create_document(WithFields, disable_insert=True)
+        doc = cls(index=1, name='the first')
+        self.assertRaises(errors.OperationError, doc.insert)
 
     def test_update(self):
         """Document.update"""
@@ -87,13 +116,18 @@ class TestDocument(common.TestCase):
 
         doc = WithFields(index=5, name='the fourth', optional='yes')
         doc.save()
-        print(doc._id)
         self.assertTrue(
             doc.update({'$set': {'name': 'the fifth'}, '$unset': {'optional': ''}}),
             "operational update did not return true")
-        print(doc._attrs)
-        print(raw)
         self.validate_save('with_fields', doc, raw)
+
+        cls = create_document(WithFields, readonly=True)
+        doc = cls(index=5, name='the fourth', optional='yes')
+        self.assertRaises(errors.OperationError, doc.update)
+
+        cls = create_document(WithFields, disable_update=True)
+        doc = cls(index=5, name='the fourth', optional='yes')
+        self.assertRaises(errors.OperationError, doc.update)
 
     def test_remove(self):
         """Document.remove"""
@@ -106,6 +140,14 @@ class TestDocument(common.TestCase):
         collection = self.connection['document']
         self.assertIsNone(collection.find_one({'_id': _id}), "document not removed")
         collection.remove()
+
+        cls = create_document(WithFields, readonly=True)
+        doc = cls(index=3, name='the third')
+        self.assertRaises(errors.OperationError, doc.remove)
+
+        cls = create_document(WithFields, disable_remove=True)
+        doc = cls(index=3, name='the third')
+        self.assertRaises(errors.OperationError, doc.remove)
 
     def test_validate(self):
         """Document._validate"""
@@ -170,6 +212,16 @@ class TestDocument(common.TestCase):
         self.assertIsNone(doc, "invalid update did occur")
         doc1._meta.get_collection().remove()
 
+        cls = create_document(WithFields, readonly=True)
+        self.assertRaises(errors.OperationError, cls.find_and_modify,
+                          {'index': 2}, {'$set': {'name': 'the second'}})
+        doc = cls(index=3, name='the third')
+
+        cls = create_document(WithFields, disable_update=True)
+        self.assertRaises(errors.OperationError, cls.find_and_modify,
+                          {'index': 2}, {'$set': {'name': 'the second'}})
+        doc = cls(index=3, name='the third')
+
     def test_subdocument(self):
         """Document.save/find with subdocument"""
         self.assertFalse(
@@ -214,6 +266,58 @@ class TestDocument(common.TestCase):
         raw = doc._encode()
         self.assertEqual(raw.get('index'), 12, "encoded value is incorrect")
         self.assertIsNone(raw.get('name'), "encoded value is incorrect")
+
+    def test_disable_methods(self):
+        """Document._meta(.readonly|.disable_.*)"""
+        doc = create_document()
+        self.assertFalse(doc._meta.readonly)
+        self.assertFalse(doc._meta.disable_save)
+        self.assertFalse(doc._meta.disable_insert)
+        self.assertFalse(doc._meta.disable_update)
+        self.assertFalse(doc._meta.disable_remove)
+
+        doc = create_document(readonly=True)
+        self.assertTrue(doc._meta.readonly)
+        self.assertTrue(doc._meta.disable_save)
+        self.assertTrue(doc._meta.disable_insert)
+        self.assertTrue(doc._meta.disable_update)
+        self.assertTrue(doc._meta.disable_remove)
+
+        doc = create_document(readonly=True, disable_save=False, disable_insert=False,
+                              disable_update=False, disable_remove=False)
+        self.assertTrue(doc._meta.readonly)
+        self.assertTrue(doc._meta.disable_save)
+        self.assertTrue(doc._meta.disable_insert)
+        self.assertTrue(doc._meta.disable_update)
+        self.assertTrue(doc._meta.disable_remove)
+
+        doc = create_document(disable_save=True)
+        self.assertFalse(doc._meta.readonly)
+        self.assertTrue(doc._meta.disable_save)
+        self.assertFalse(doc._meta.disable_insert)
+        self.assertFalse(doc._meta.disable_update)
+        self.assertFalse(doc._meta.disable_remove)
+
+        doc = create_document(disable_insert=True)
+        self.assertFalse(doc._meta.readonly)
+        self.assertFalse(doc._meta.disable_save)
+        self.assertTrue(doc._meta.disable_insert)
+        self.assertFalse(doc._meta.disable_update)
+        self.assertFalse(doc._meta.disable_remove)
+
+        doc = create_document(disable_update=True)
+        self.assertFalse(doc._meta.readonly)
+        self.assertFalse(doc._meta.disable_save)
+        self.assertFalse(doc._meta.disable_insert)
+        self.assertTrue(doc._meta.disable_update)
+        self.assertFalse(doc._meta.disable_remove)
+
+        doc = create_document(disable_remove=True)
+        self.assertFalse(doc._meta.readonly)
+        self.assertFalse(doc._meta.disable_save)
+        self.assertFalse(doc._meta.disable_insert)
+        self.assertFalse(doc._meta.disable_update)
+        self.assertTrue(doc._meta.disable_remove)
 
 
 class TestPartialDocument(common.TestCase):
