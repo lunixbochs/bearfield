@@ -269,6 +269,28 @@ class TestDocument(common.TestCase):
         self.assertEqual(raw.get('index'), 12, "encoded value is incorrect")
         self.assertIsNone(raw.get('name'), "encoded value is incorrect")
 
+    def test_modifier(self):
+        """Field modifiers""" 
+        now = datetime.now()
+        class Modified(document.Document):
+            class Meta:
+                connection = 'test'
+            index = Field(int)
+            updated = Field(datetime, modifier=lambda v: v or now)
+
+        doc = Modified(index=1)
+        self.assertIsNone(doc.updated)
+        doc.save()
+        self.assertEquals(doc.updated, now)
+
+        now = datetime.now().replace(microsecond=0)
+        doc.updated = now
+        doc.save()
+        self.assertEquals(doc.updated, now)
+
+        doc = Modified.find_one({'_id': doc._id})
+        self.assertEqual(doc.updated, now)
+
     def test_disable_methods(self):
         """Document._meta(.readonly|.disable_.*)"""
         doc = create_document()

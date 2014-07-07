@@ -1,5 +1,6 @@
 ## v1.4 - Callable Defaults
 + Support callables as default field values.
++ Support modifying field values before encoding.
 
 ## v1.3 - Readonly and Reasonableness
 + Add readonly, disable_save, disable_insert, disable_update, and

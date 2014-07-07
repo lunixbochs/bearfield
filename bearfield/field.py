@@ -53,19 +53,21 @@ class BaseField(object):
 class Field(BaseField):
     """A field object defines how a document field behaves."""
 
-    def __init__(self, typ, require=False, default=None, strict=True):
+    def __init__(self, typ, require=False, default=None, strict=True, modifier=None):
         """
         Initialize a new field. typ is the type of the field and may be a FieldType or a built-in
         Python type. require is a boolean that indicates whether or not the field is required.
         default is the default value to be stored if the field's value is None. strict determines
         whether or not type conversion and validation should occur during storage and retrieval of
-        the field.
+        the field. modifier is a callable used to modify the value before insert or update. It
+        takes the current field value as its only parameter. The return value is encoded and saved.
         """
         self.typ = FieldType.create(typ)
         self.require = require
         self.default = default
         self.strict = strict
         self.validators = [self.typ.validate]
+        self.modifier = modifier
 
     def ensure(self, func):
         """

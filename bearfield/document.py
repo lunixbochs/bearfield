@@ -118,11 +118,16 @@ class Document(object):
         Return the document as a dictionary suitable for saving. If update is
         True then an update document is returned.
         """
+        def modify(name, field):
+            if getattr(field, 'modifier', None):
+                setattr(self, name, field.modifier(getattr(self, name)))
+
         raw = {}
         if update:
             sets = {}
             unsets = {}
             for name, field in self._meta.get_fields(self._partial).iteritems():
+                modify(name, field)
                 if name not in self._dirty:
                     continue
                 value = self._attrs.get(name)
@@ -136,6 +141,7 @@ class Document(object):
                 raw['$unset'] = unsets
         else:
             for name, field in self._meta.get_fields(self._partial).iteritems():
+                modify(name, field)
                 if name in self._attrs:
                     value = self._attrs[name]
                     if value is not None:
