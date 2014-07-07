@@ -1,4 +1,6 @@
-## v1.3 - Fields
+## v1.3 - Readonly and Reasonableness
+* Add readonly, disable_save, disable_insert, disable_update, and
+  disable_remove options to document Meta.
 * Fields now default to require=False.
 
 ## v1.2 - setuptools
