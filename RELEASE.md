@@ -1,5 +1,8 @@
+## v1.4 - Callable Defaults
++ Support callables as default field values.
+
 ## v1.3 - Readonly and Reasonableness
-* Add readonly, disable_save, disable_insert, disable_update, and
++ Add readonly, disable_save, disable_insert, disable_update, and
   disable_remove options to document Meta.
 * Fields now default to require=False.
 

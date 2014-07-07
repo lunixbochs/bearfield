@@ -259,10 +259,12 @@ class TestDocument(common.TestCase):
                 connection = 'test'
             index = Field(int, default="12")
             name = Field(str)
+            called = Field([str], default=lambda: range(2))
 
         doc = Defaults()
         self.assertEqual(doc.index, 12, "attribute value is incorrect")
         self.assertIsNone(doc.name, "attribute value is incorrect")
+        self.assertEqual(doc.called, ['0', '1'])
         raw = doc._encode()
         self.assertEqual(raw.get('index'), 12, "encoded value is incorrect")
         self.assertIsNone(raw.get('name'), "encoded value is incorrect")
