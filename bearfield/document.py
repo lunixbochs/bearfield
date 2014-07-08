@@ -84,7 +84,8 @@ class Document(object):
         criteria = Query(query).encode(cls, raw)
         if not raw:
             sort = SortEncoder(cls).encode(sort)
-        return cls._decode(collection.find_one(criteria, fields=fields, sort=sort, **options), fields)
+        return cls._decode(collection.find_one(criteria, fields=fields,
+                                               sort=sort, **options), fields)
 
     @classmethod
     def find_and_modify(cls, query, update, fields=None, connection=None, raw=None, sort=None,

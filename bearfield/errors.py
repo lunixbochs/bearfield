@@ -1,5 +1,6 @@
 """Framework errors."""
 
+
 class Error(Exception):
     """Base error type."""
 

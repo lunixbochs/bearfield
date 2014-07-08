@@ -147,22 +147,26 @@ class DocumentMeta(object):
     @property
     def disable_save(self):
         """Return True if save is disabled for the document."""
-        return bool(self.options.get('readonly', False) or self.options.get('disable_save', False))
+        return (bool(self.options.get('readonly', False) or
+                self.options.get('disable_save', False)))
 
     @property
     def disable_insert(self):
         """Return True if insert is disabled for the document."""
-        return bool(self.options.get('readonly', False) or self.options.get('disable_insert', False))
+        return (bool(self.options.get('readonly', False) or
+                self.options.get('disable_insert', False)))
 
     @property
     def disable_update(self):
         """Return True if update is disabled for the document."""
-        return bool(self.options.get('readonly', False) or self.options.get('disable_update', False))
+        return (bool(self.options.get('readonly', False) or
+                self.options.get('disable_update', False)))
 
     @property
     def disable_remove(self):
         """Return True if remove is disabled for the document."""
-        return bool(self.options.get('readonly', False) or self.options.get('disable_remove', False))
+        return (bool(self.options.get('readonly', False) or
+                self.options.get('disable_remove', False)))
 
 
 class DocumentBuilder(type):
