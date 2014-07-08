@@ -17,10 +17,17 @@ class DocumentMeta(object):
 
         self.bind_init()
 
+        fields = {}
+        for base in reversed(cls.__bases__):
+            if isinstance(getattr(base, '_meta', None), self.__class__):
+                fields.update(base._meta.fields)
+
         if attrs:
             for name, attr in attrs.items():
                 if isinstance(attr, BaseField):
-                    self.fields[name] = attr
+                    fields[name] = attr
+
+        self.fields = fields
 
         if meta:
             self.options.update(vars(meta))

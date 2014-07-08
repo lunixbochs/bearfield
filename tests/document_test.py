@@ -59,6 +59,8 @@ class Partial(document.Document):
     type = Field(str)
 
 
+
+
 class TestDocument(common.TestCase):
     """Test Document class."""
 
@@ -346,6 +348,7 @@ class TestDocument(common.TestCase):
 
 class TestPartialDocument(common.TestCase):
     """Test partial Document objects."""
+
     def test_save(self):
         """Document.save (partial)"""
         raw = {'index': 1, 'name': 'the first'}
@@ -417,3 +420,34 @@ class TestPartialDocument(common.TestCase):
 
         field = TopDocument._meta.get_field('sub.name.nope')
         self.assertIsNone(field)
+
+
+class TestInheritedDocument(common.TestCase):
+    """Test inherited Document objects."""
+
+    def test_fields(self):
+        """Inherited Document fields"""
+        class Parent1(document.Document):
+            class Meta:
+                connection = 'test'
+            index = Field(int)
+
+        class Parent2(document.Document):
+            class Meta:
+                connection = 'test'
+            type = Field(str)
+
+        class SingleChild(Parent1):
+            class Meta:
+                connection = 'test'
+            name = Field(str)
+
+        class MultiChild(Parent1, Parent2):
+            class MetA:
+                connection = 'test'
+            name = Field(str)
+
+        self.assertEqual(set(Parent1._meta.fields.keys()), {'_id', 'index'})
+        self.assertEqual(set(Parent2._meta.fields.keys()), {'_id', 'type'})
+        self.assertEqual(set(SingleChild._meta.fields.keys()), {'_id', 'index', 'name'})
+        self.assertEqual(set(MultiChild._meta.fields.keys()), {'_id', 'index', 'name', 'type'})
