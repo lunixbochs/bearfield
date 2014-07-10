@@ -1,3 +1,6 @@
+## v1.5 - Inheritance
++ Support document inheritance.
+
 ## v1.4 - Callable Defaults
 + Support callables as default field values.
 + Support modifying field values before encoding.
