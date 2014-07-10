@@ -112,7 +112,7 @@ class SortEncoder(BaseEncoder):
                 direction = self.encode_int(field, direction)
                 field = self.encode_str(field, field)
                 encoded[field] = direction
-            return encoded
+            return encoded.items()
         except (TypeError, ValueError):
             pass
 

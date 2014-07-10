@@ -61,13 +61,13 @@ class TestSortEncoder(unittest.TestCase):
                     self.assertEqual(have, want)
 
         # one field
-        want = OrderedDict([('index', 1)])
+        want = [('index', 1)]
         test({'index': 1}, want)
         test({'index': '1'}, want)
         test({'index': 'nope'}, EncodingError)
 
         # two fields
-        want = OrderedDict([('index', 1), ('name', -1)])
+        want = [('index', 1), ('name', -1)]
         test({'index': 1, 'name': -1}, want)
         test({'index': '1', 'name': -1}, want)
         test({'index': '1', 'name': '-1'}, want)
@@ -77,7 +77,7 @@ class TestSortEncoder(unittest.TestCase):
         test({'index': 'nope', 'name': 'nope'}, EncodingError)
 
         # no fields
-        want = OrderedDict()
+        want = []
         test({}, want)
 
         # None
@@ -353,7 +353,7 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$push', 'array', {'$each': [1, 2], '$sort': 1}, want)
         test('$push', 'array', {'$each': [1, '2'], '$sort': 1}, want)
         test('$push', 'array', {'$each': [1, '2'], '$sort': '1'}, want)
-        want = OrderedDict([('$each', [1, 2]), ('$sort', OrderedDict([('value', 1)]))])
+        want = OrderedDict([('$each', [1, 2]), ('$sort', [('value', 1)])])
         test('$push', 'array', {'$each': [1, 2], '$sort': {'value': 1}}, want)
         test('$push', 'array', {'$each': [1, '2'], '$sort': {'value': 1}}, want)
         test('$push', 'array', {'$each': [1, 2], '$sort': {'value': '1'}}, want)

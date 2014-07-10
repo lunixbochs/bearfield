@@ -1,3 +1,6 @@
+## v1.6 - Sort Bugs
+* Correctly encode sorts as a list of tuples.
+
 ## v1.5 - Inheritance
 + Support document inheritance.
 
