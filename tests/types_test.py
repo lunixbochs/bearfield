@@ -116,6 +116,7 @@ class TestBuiltinType(unittest.TestCase):
         value = typ.encode('test', 'test', 12.3)
         self.assertIsInstance(value, int, "returned value is not an int")
         self.assertEqual(value, 12, "returned int value is incorrect")
+        self.assertRaises(errors.EncodingError, typ.encode, 'test', 'test', 'nan')
 
     def test_decode(self):
         """BuiltinType.decode"""

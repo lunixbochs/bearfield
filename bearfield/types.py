@@ -139,7 +139,7 @@ class BuiltinType(FieldType):
         try:
             return self.builtin(value)
         except (TypeError, ValueError):
-            msg = "failed to encode value as {}".format(self.builtin.__name__)
+            msg = "failed to encode value as {}".format(self.builtin.__class__.__name__)
             raise EncodingError(msg, cls, name, value, True)
 
 
