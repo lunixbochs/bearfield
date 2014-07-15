@@ -307,7 +307,7 @@ class TestSetType(unittest.TestCase):
     """Test the ListType class."""
 
     def test_encode(self):
-        """ListType.encode"""
+        """SetType.encode"""
         items = {'1', '2', 3}
         want = {1, 2, 3}
         typ = types.SetType({int})
@@ -322,7 +322,7 @@ class TestSetType(unittest.TestCase):
         self.assertEqual(set(have), items, "encoded untyped list value is incorrect")
 
     def test_decode(self):
-        """ListType.decode"""
+        """SetType.decode"""
         typ = types.SetType({int})
         items = [1, 2, 3]
         have = typ.decode('test', 'test', items)
