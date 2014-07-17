@@ -1,6 +1,6 @@
 """Test document module."""
 import common
-from bearfield import Field, Q, document, errors, types
+from bearfield import Field, Q, Reference, document, errors, types
 from datetime import datetime
 
 
@@ -59,6 +59,12 @@ class Partial(document.Document):
     type = Field(str)
 
 
+class WithReference(document.Document):
+    class Meta:
+        connection = 'test'
+    index = Field(int)
+    sub = Field(SubDocument)
+    ref = Reference(SubDocument)
 
 
 class TestDocument(common.TestCase):
@@ -344,6 +350,31 @@ class TestDocument(common.TestCase):
         self.assertFalse(doc._meta.disable_insert)
         self.assertFalse(doc._meta.disable_update)
         self.assertTrue(doc._meta.disable_remove)
+
+    def test_get_field(self):
+        """Document._meta.get_field"""
+        def test(name, want):
+            field = WithReference._meta.get_field(name)
+            if want is None:
+                self.assertIsNone(field)
+            elif isinstance(want, Reference):
+                self.assertIsInstance(field, Reference)
+                self.assertEqual(field.doctype, want.doctype)
+            else:
+                self.assertIsInstance(field, Field)
+                if hasattr(field.typ, 'builtin'):
+                    self.assertEqual(field.typ.builtin, want.typ.builtin)
+                elif hasattr(field.typ, 'document'):
+                    self.assertEqual(field.typ.document, want.typ.document)
+                else:
+                    self.assertEqual(field.typ.__class__, want.typ.__class__)
+
+        test('index', Field(int))
+        test('index.none', None)
+        test('sub', Field(SubDocument))
+        test('sub.index', Field(int))
+        test('ref', Reference(SubDocument))
+        test('ref.index', None)
 
 
 class TestPartialDocument(common.TestCase):
