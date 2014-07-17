@@ -1,3 +1,7 @@
+## v1.7 - Type Bugs
+* Allow use of `new` parameter in `find_and_modify`.
+* Fix some bugs related to field processing.
+
 ## v1.6 - Sort Bugs
 * Correctly encode sorts as a list of tuples.
 
