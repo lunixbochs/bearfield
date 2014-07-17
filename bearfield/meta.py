@@ -127,7 +127,7 @@ class DocumentMeta(object):
         while len(names):
             name = names.pop()
             field = doc._meta.fields.get(name)
-            if not field or not isinstance(field.typ, DocumentType):
+            if not hasattr(field, 'typ') or not isinstance(field.typ, DocumentType):
                 break
             doc = field.typ.document
 
