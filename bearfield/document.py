@@ -154,12 +154,8 @@ class Document(object):
                     raw[name] = value
         return raw
 
-    def _reset(self, raw, update=False):
+    def _reset(self, raw):
         """Reset internal field storage using the raw document."""
-        if update:
-            unsets = {k: None for k in raw.get('$unset', {}).iteritems()}
-            raw = raw.get('$set', {})
-            raw.update(unsets)
         self._raw.update(raw)
         self._attrs = {}
         self._dirty = set()
@@ -231,10 +227,10 @@ class Document(object):
             options.pop('multi', None)
             options.pop('new', None)
             options.pop('fields', None)
-            self._attrs.update(collection.find_and_modify(
+            res = collection.find_and_modify(
                 {'_id': self._id}, update, fields=self._partial, multi=False, new=True, sort=sort,
-                **options))
-            self._reset(update, True)
+                **options)
+            self._reset(res)
             return True
         return False
 
