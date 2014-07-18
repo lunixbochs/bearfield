@@ -1,3 +1,7 @@
+## v1.8 - Query Bugs
+* Fix bug causing queries with references to break.
+* Fix internal storage bug which prevented updates from saving changes.
+
 ## v1.7 - Type Bugs
 * Allow use of `new` parameter in `find_and_modify`.
 * Fix some bugs related to field processing.
