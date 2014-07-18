@@ -1,4 +1,5 @@
 """Code for managing references."""
+from .document import Document
 from .errors import EncodingError
 from .field import BaseField
 from .query import Query
@@ -54,6 +55,8 @@ class Reference(BaseField):
         """Return an encoded ObjectID or Query."""
         if isinstance(value, Query):
             value = value.encode(self.doctype)
+        elif isinstance(value, Document):
+            value = value._id
         return value
 
     def decode(self, cls, name, value):

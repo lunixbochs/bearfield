@@ -1,7 +1,7 @@
 """Test encoders module."""
 import re
 import unittest
-from bearfield import Document, Field, encoders
+from bearfield import Document, Field, ObjectId, Reference, encoders
 from bearfield.errors import EncodingError
 from collections import OrderedDict
 from datetime import date, datetime, time
@@ -33,6 +33,7 @@ class ForEncoders(Document):
     array = Field([int])
     sub = Field(Subdocument)
     subarray = Field([Subdocument])
+    ref = Reference(Subdocument)
 
 
 class ForString(object):
@@ -256,6 +257,18 @@ class TestQueryEncoder(unittest.TestCase):
             ])),
         ])
         test({'text': {'$regex': '^value$', '$options': 'i'}}, want)
+
+        # test references
+        doc = Subdocument(_id=ObjectId())
+        want = OrderedDict([('ref', doc._id)])
+        test({'ref': doc}, want)
+
+        want = OrderedDict([
+            ('ref', OrderedDict([
+                ('index', OrderedDict([('$gt', 1)])),
+            ])),
+        ])
+        test({'ref': {'index': {'$gt': 1}}}, want)
 
         # test empty values
         enc = encoders.QueryEncoder(ForEncoders)
