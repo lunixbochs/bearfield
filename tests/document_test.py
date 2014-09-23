@@ -176,7 +176,7 @@ class TestDocument(common.TestCase):
         WithFields(index=4, name='the fourth').save()
 
         docs = WithFields.find()
-        count = len(docs)
+        count = docs.count()
         self.assertEqual(count, 3, "find() returned incorrect number of documents")
 
         docs = list(docs)
@@ -184,9 +184,9 @@ class TestDocument(common.TestCase):
 
         criteria = {'index': {'$gt': 2}}
         docs = WithFields.find(criteria)
-        count = len(docs)
+        count = docs.count()
         self.assertEqual(
-            len(docs), 2, "find({}) returned incorrect number of documents")
+            count, 2, "find({}) returned incorrect number of documents")
 
         count = WithFields.find().remove()
         self.assertEqual(count, 3, "find().remove() returned incorrect number of documents")

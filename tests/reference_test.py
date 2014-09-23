@@ -121,18 +121,18 @@ class TestReference(common.TestCase):
 
         cursor = parent.child.find()
         self.assertIsInstance(cursor, Cursor)
-        self.assertEqual(len(cursor), 1)
+        self.assertEqual(cursor.count(), 1)
         self.assertEqual(cursor[0]._id, child._id)
 
         parent.child = Query({'name': 'parent'})
         cursor = parent.child.find()
         self.assertIsInstance(cursor, Cursor)
-        self.assertEqual(len(cursor), 0)
+        self.assertEqual(cursor.count(), 0)
 
         parent.child = child
         cursor = parent.child.find()
         self.assertIsInstance(cursor, Cursor)
-        self.assertEqual(len(cursor), 1)
+        self.assertEqual(cursor.count(), 1)
         self.assertEqual(cursor[0]._id, child._id)
 
         self.remove(Child)
