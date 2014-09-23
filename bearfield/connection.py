@@ -26,7 +26,7 @@ class Connection(object):
 
     def __init__(self, uri, prefix=None, retries=None, backoff=None, **options):
         """
-        Initialize the connection. The URI should be a full mongodb:// URI including the datbase
+        Initialize the connection. The URI should be a full mongodb:// URI including the database
         name. The prefix is optional and is a string used to prefix all collection names. The
         retries are the number of times to retry a command when pymongo raises an AutoReconnect.
         The backoff is how much time to add to the time between each successive retry. Additional
@@ -105,12 +105,20 @@ def get(name):
     return connections.get(name)
 
 
-def add(name, connection):
+def add(name, connection=None, default=False):
     """
     Add a named connection. The connection may be a Connection object or configuration for one.
+    If a connection string/object is not specified, `mongodb://localhost//{{name}}` is used.
+
+    When default is True, the global default connection is updated. This is used
+    by all models which lack an explicitly-defined connection.
     """
+    if connection is None:
+        connection = Connection.configure('mongodb://localhost/{}'.format(name))
     if not isinstance(connection, Connection):
         connection = Connection.configure(connection)
+    if default:
+        connections[None] = connection
     connections[name] = connection
 
 
@@ -120,7 +128,7 @@ def configure(config):
     containing named connections. The keys of the dictionary are the names while the values are the
     configuration for each connection. The value may be a string containing the database URI or a
     dictionary with the keys 'uri' for the database URI, and 'prefix' for a string with which to
-    prefix collection names. Remaining options are passed as keyworkd args to pymongo's
+    prefix collection names. Remaining options are passed as keyword args to pymongo's
     MongoClient.
     """
     for name, options in config.iteritems():
