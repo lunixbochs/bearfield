@@ -110,6 +110,12 @@ class Document(object):
                                          **options)
         return cls._decode(raw, fields)
 
+    @classmethod
+    def count(cls, connection=None):
+        """Count the number of objects in this collection."""
+        collection = cls._meta.get_collection(connection)
+        return collection.count()
+
     def __init__(self, *args, **kwargs):
         """Initialize the document with values."""
         for name, value in kwargs.iteritems():

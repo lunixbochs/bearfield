@@ -47,6 +47,10 @@ class Cursor(object):
                 self._criteria, fields=self.fields, **self.options)
         return self._pymongo_cursor
 
+    def count(self):
+        """Count the number of objects matching this cursor."""
+        return self.pymongo.count()
+
     def find(self, query):
         """Refine the cursor's scope with an additional query. Return a new cursor."""
         query = self.query & self._make_query(query)

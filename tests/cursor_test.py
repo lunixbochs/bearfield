@@ -57,5 +57,5 @@ class TestCursor(common.TestCase):
         """Cursor.close"""
         cur = cursor.Cursor(self.Document(), self.collection, {'index': 1}, None, False)
         cur.close()
-        len(cur)
+        cur.count()
         cur.close()
