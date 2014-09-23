@@ -105,12 +105,20 @@ def get(name):
     return connections.get(name)
 
 
-def add(name, connection):
+def add(name, connection=None, default=False):
     """
     Add a named connection. The connection may be a Connection object or configuration for one.
+    If a connection string/object is not specified, `mongodb://localhost//{{name}}` is used.
+
+    When default is True, the global default connection is updated. This is used
+    by all models which lack an explicitly-defined connection.
     """
+    if connection is None:
+        connection = Connection.configure('mongodb://localhost/{}'.format(name))
     if not isinstance(connection, Connection):
         connection = Connection.configure(connection)
+    if default:
+        connections[None] = connection
     connections[name] = connection
 
 
