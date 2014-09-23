@@ -12,7 +12,7 @@ class Document(object):
     order for a document to be saved to a database it must associate itself with a named connection
     by setting the 'connection' meta attribute to that connection name. The collection name is the
     connection prefix plus the snake cased class name of the document. This may be overridden by
-    setting the 'collection' property to the desired named of the colleciton. The connection's
+    setting the 'collection' property to the desired name of the collection. The connection's
     prefix will still be prepended to the name.
 
     Fields are defined on the document by assigning Field objects to class attributes. See the

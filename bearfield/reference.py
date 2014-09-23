@@ -111,7 +111,7 @@ class ReferenceFinder(object):
 
     def find_one(self, fields=None, connection=None, **options):
         """
-        Return the rsults of a find_one using the reference. Options are the same as
+        Return the results of a find_one using the reference. Options are the same as
         Document.find_one() without query.
         """
         cls = self.reference.doctype
