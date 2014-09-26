@@ -62,11 +62,11 @@ class Query(object):
         return self._op('$nor', query)
 
     def __and__(self, query):
-        """Logical and. Calls qand()."""
+        """Logically and this query (left side) with the provided query (right side)."""
         return self._op('$and', query)
 
     def __or__(self, query):
-        """Logical or. Calls qor()."""
+        """Logically or this query (left side) with the provided query (right side)."""
         return self._op('$or', query)
 
     def __eq__(self, query):
