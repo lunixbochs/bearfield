@@ -114,7 +114,20 @@ class TestFunctions(unittest.TestCase):
             connection.connections = {}
 
     def test_add(self):
-        """connection.add"""
+        """connection.add('test')"""
+        name = 'test'
+        uri = 'mongodb://localhost/{}'.format(name)
+        con = connection.Connection(uri)
+        try:
+            connection.add(name)
+            self.assertEquals(
+                connection.connections[name].uri, con.uri, "registered connection is incorrect")
+        finally:
+            con.close()
+            connection.connections = {}
+
+    def test_add_uri(self):
+        """connection.add('test', 'mongodb://localhost/test')"""
         con = connection.Connection(uri)
         try:
             name = 'test'
@@ -125,6 +138,8 @@ class TestFunctions(unittest.TestCase):
             con.close()
             connection.connections = {}
 
+    def test_add_config(self):
+        """connection.add('test', {'uri': uri, 'prefix': 'units_'})"""
         config = {'uri': uri, 'prefix': 'units_'}
         name = 'test'
         connection.add(name, config)
@@ -134,6 +149,18 @@ class TestFunctions(unittest.TestCase):
                 con.database.name, 'test', "registered connection is incorrect")
             self.assertEquals(
                 con.prefix, config['prefix'], "registered connection is incorrect")
+        finally:
+            con.close()
+            connection.connections = {}
+
+    def test_add_default(self):
+        """connection.add('test', 'mongodb://localhost/test', True)"""
+        con = connection.Connection(uri)
+        try:
+            name = 'test'
+            connection.add(name, con, True)
+            self.assertEquals(
+                connection.connections[None], con, "registered connection is incorrect")
         finally:
             con.close()
             connection.connections = {}
