@@ -105,7 +105,8 @@ class DocumentMeta(object):
             connection = self.get_connection(connection)
             if connection:
                 return connection[self.collection]
-        raise OperationError("document {} has no connection, and no default exists".format(self.cls.__name__))
+        raise OperationError(
+            "document {} has no connection, and no default exists".format(self.cls.__name__))
 
     def get_partial(self, fields):
         """Return a valid partial value from a list of fields."""
