@@ -232,21 +232,32 @@ class TestDocument(common.TestCase):
 
     def test_subdocument(self):
         """Document.save/find with subdocument"""
-        self.assertFalse(
-            WithFields._meta.subdocument, "document incorrectly marked as subdocument")
-        self.assertTrue(
-            SubDocument._meta.subdocument, "subdocument incorrectly marked as document")
-        self.assertRaises(
-            errors.OperationError, SubDocument.find, "subdocument does not error on find")
-
         raw = {'sub': {'index': 20, 'name': 'the twentieth'}}
         sub = SubDocument(index=20, name='the twentieth')
         doc = TopDocument(sub=sub)
         doc.save()
 
+        self.assertFalse(
+            doc._subdocument, "document incorrectly marked as subdocument")
+        self.assertTrue(
+            doc.sub._subdocument, "subdocument incorrectly marked as document")
+        self.assertFalse(
+            sub._subdocument, "document incorrectly marked as subdocument")
+
         doc = TopDocument.find_one()
         self.assertEqual(doc._encode()['sub'], raw['sub'], "returned subdocument is incorrect")
         self.validate_save('top_document', doc, raw)
+
+    def test_subdocument_magic(self):
+        self.assertTrue('_id' in TopDocument._meta.get_fields(None, subdocument=False))
+        self.assertFalse('_id' in TopDocument._meta.get_fields(None, subdocument=True))
+        sub = SubDocument()
+        top = TopDocument(sub=sub)
+        self.assertTrue(hasattr(sub, '_id'))
+        self.assertTrue(hasattr(top, '_id'))
+        self.assertFalse(top.sub._subdocument)
+        top.save()
+        self.assertFalse(hasattr(top.sub, '_id'))
 
     def test_meta_get_collection(self):
         """Document._meta.get_collection"""
@@ -415,6 +426,7 @@ class TestPartialDocument(common.TestCase):
         """Document.find (partial)"""
         Partial(index=1, name='the first', type='the best kind').save()
         docs = Partial.find({'index': 1}, ['type'])
+        # I just checked
         want = {'_id': docs[0]._id, 'type': 'the best kind'}
         have = docs[0]._encode()
         self.assertEquals(have, want, "found document is incorrect")
@@ -478,7 +490,7 @@ class TestInheritedDocument(common.TestCase):
                 connection = 'test'
             name = Field(str)
 
-        self.assertEqual(set(Parent1._meta.fields.keys()), {'_id', 'index'})
-        self.assertEqual(set(Parent2._meta.fields.keys()), {'_id', 'type'})
-        self.assertEqual(set(SingleChild._meta.fields.keys()), {'_id', 'index', 'name'})
-        self.assertEqual(set(MultiChild._meta.fields.keys()), {'_id', 'index', 'name', 'type'})
+        self.assertEqual(set(Parent1._meta.get_fields(None)), {'_id', 'index'})
+        self.assertEqual(set(Parent2._meta.get_fields(None)), {'_id', 'type'})
+        self.assertEqual(set(SingleChild._meta.get_fields(None)), {'_id', 'index', 'name'})
+        self.assertEqual(set(MultiChild._meta.get_fields(None)), {'_id', 'index', 'name', 'type'})

@@ -35,7 +35,11 @@ def is_time_type(typ):
 
 def is_document_type(typ):
     """Return True if type is a Document."""
-    from .document import Document
+    try:
+        from .document import Document
+    except ImportError:
+        # It's impossible to create a Document field if it can't yet be imported.
+        return False
     return is_type(typ, Document)
 
 
@@ -213,13 +217,13 @@ class DocumentType(FieldType):
     def encode(self, cls, name, value):
         """Return the value encoded as a raw subdocument."""
         if is_document_obj(value):
-            return value._encode()
+            return value._encode(subdocument=True)
         raise EncodingError(None, cls, name, value, True)
 
     def decode(self, cls, name, value):
         """Return the value decoded as a subdocument object."""
         if hasattr(value, 'get'):
-            return self.document._decode(value)
+            return self.document._decode(value, subdocument=True)
         raise EncodingError(None, cls, name, value, False)
 
     def validate(self, cls, name, value):

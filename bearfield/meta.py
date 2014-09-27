@@ -5,6 +5,9 @@ from .field import BaseField, Field
 from bson import ObjectId
 from utils import to_snake_case
 
+# This is added dynamically to parent documents.
+id_field = Field(ObjectId, require=False)
+
 
 class DocumentMeta(object):
     """Metadata container for Document classes."""
@@ -38,10 +41,7 @@ class DocumentMeta(object):
         if not self.collection:
             self.collection = to_snake_case(cls.__name__)
 
-        self.subdocument = not bool(self.connection)
-        if not self.subdocument and '_id' not in self.fields:
-            self.fields['_id'] = Field(ObjectId, require=False)
-
+        self.implicit_id = '_id' not in self.fields
         self.bind_fields()
 
     def bind_init(meta):
@@ -68,16 +68,20 @@ class DocumentMeta(object):
         __init__.parent = parent
         meta.cls.__init__ = __init__
 
-    def bind_fields(self):
+    def bind_fields(self, cls=None, fields=None):
         """Bind fields to the document class."""
+        if fields is None:
+            fields = self.fields
+        if cls is None:
+            cls = self.cls
         defaults = {}
-        for name, field in self.fields.items():
-            setattr(self.cls, name, field(self.cls, name))
+        for name, field in fields.items():
+            setattr(cls, name, field(cls, name))
             default = field.default
             if default is not None:
                 if not hasattr(default, '__call__'):
-                    default = field.encode(self.cls, name, field.default)
-                field.validate(self.cls, name, default)
+                    default = field.encode(cls, name, field.default)
+                field.validate(cls, name, default)
             defaults[name] = default
 
         self.defaults = defaults
@@ -108,17 +112,27 @@ class DocumentMeta(object):
                 return connection[self.collection]
         raise OperationError("document {} has no connection, and no default exists".format(self.cls.__name__))
 
-    def get_partial(self, fields):
+    def get_partial(self, fields, subdocument=False):
         """Return a valid partial value from a list of fields."""
         if fields:
-            return {'_id'} | set(fields)
+            print
+            print fields, set(self.fields)
+            fields = set(fields).intersection(self.fields) | {'_id'}
+            print fields
+            if subdocument and self.implicit_id:
+                fields.remove('_id')
+            return fields
         return None
 
-    def get_fields(self, partial):
+    def get_fields(self, partial, subdocument=False):
         """Return a dictionary containing active fields."""
+        fields = self.fields
+        if self.implicit_id and not subdocument:
+            fields = fields.copy()
+            fields['_id'] = id_field
         if partial:
-            return {k: self.fields[k] for k in partial if k in self.fields}
-        return self.fields
+            return {k: fields[k] for k in partial if k in fields}
+        return fields
 
     def get_field(self, name):
         """Return the named field. Supports dot syntax to retrieve fields from subdocuments."""
@@ -134,6 +148,12 @@ class DocumentMeta(object):
             if not hasattr(field, 'typ') or not isinstance(field.typ, DocumentType):
                 break
             doc = field.typ.document
+
+        # Add an implicit _id field if necessary.
+        if not field and name == '_id' and doc._meta.implicit_id:
+            # Don't add it to subdocuments.
+            if doc == self.cls:
+                return id_field
 
         if len(names):
             return None

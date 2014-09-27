@@ -2,8 +2,9 @@
 from .cursor import Cursor
 from .encoders import SortEncoder, UpdateEncoder
 from .errors import OperationError, ValidationError
-from .meta import DocumentBuilder
+from .meta import DocumentBuilder, id_field
 from .query import Query
+from .utils import duck_punch
 
 
 class Document(object):
@@ -22,16 +23,17 @@ class Document(object):
     a subdocument.
     """
     __metaclass__ = DocumentBuilder
+    _subdocument = False
 
     @classmethod
-    def _decode(cls, raw, fields=None):
+    def _decode(cls, raw, fields=None, subdocument=False):
         """
         Return a document decoded from a MongoDB record. If fields is not None then a partial
         document will be created with those field values.
         """
         if raw is None:
             return None
-        doc = cls()
+        doc = cls(_subdocument=subdocument)
         doc._raw = raw.copy()
         doc._partial = cls._meta.get_partial(fields)
         return doc
@@ -121,7 +123,10 @@ class Document(object):
         for name, value in kwargs.iteritems():
             setattr(self, name, value)
 
-    def _encode(self, update=False):
+        if not self._subdocument and self._meta.implicit_id:
+            duck_punch(self, '_id', id_field(self.__class__, '_id'))
+
+    def _encode(self, update=False, subdocument=False):
         """
         Return the document as a dictionary suitable for saving. If update is
         True then an update document is returned.
@@ -134,9 +139,10 @@ class Document(object):
         if update:
             sets = {}
             unsets = {}
-            for name, field in self._meta.get_fields(self._partial).iteritems():
+            for name, field in self._meta.get_fields(self._partial, self._subdocument).iteritems():
                 modify(name, field)
                 if name not in self._dirty:
+                    print 'subdocument' if subdocument else 'document', vars(field)
                     continue
                 value = self._attrs.get(name)
                 if value is None:
@@ -148,7 +154,7 @@ class Document(object):
             if unsets:
                 raw['$unset'] = unsets
         else:
-            for name, field in self._meta.get_fields(self._partial).iteritems():
+            for name, field in self._meta.get_fields(self._partial, self._subdocument).iteritems():
                 modify(name, field)
                 if name in self._attrs:
                     value = self._attrs[name]
