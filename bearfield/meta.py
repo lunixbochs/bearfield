@@ -21,6 +21,7 @@ class DocumentMeta(object):
         for base in reversed(cls.__bases__):
             if isinstance(getattr(base, '_meta', None), self.__class__):
                 fields.update(base._meta.fields)
+                self.options.update(base._meta.options)
 
         if attrs:
             for name, attr in attrs.items():
@@ -32,8 +33,8 @@ class DocumentMeta(object):
         if meta:
             self.options.update(vars(meta))
 
-        self.connection = self.options.pop('connection', None)
-        self.collection = self.options.pop('collection', None)
+        self.connection = self.options.get('connection', None)
+        self.collection = self.options.get('collection', None)
         if not self.collection:
             self.collection = to_snake_case(cls.__name__)
 
