@@ -131,6 +131,12 @@ class TestQueryEncoder(unittest.TestCase):
         test({'array': [1, 2, 3]}, want)
         test({'array': [1, 2, '3']}, want)
         test({'array': [1, 2, 'nope']}, EncodingError)
+        want = OrderedDict([('array', 1)])
+        test({'array': 1}, want)
+        want = OrderedDict([('strarray', ['aye', 'bee'])])
+        test({'strarray': ['aye', 'bee']}, want)
+        want = OrderedDict([('strarray', 'aye')])
+        test({'strarray': 'aye'}, want)
 
         # test field operators
         want = OrderedDict([('number', OrderedDict([('$gt', 1)]))])
@@ -153,6 +159,20 @@ class TestQueryEncoder(unittest.TestCase):
         test({'$and': {'number': {'$gt': 5}}}, EncodingError)
         want = OrderedDict([('$and', None)])
         test({'$and': None}, want)
+
+        want = OrderedDict([
+            ('$or', [
+                OrderedDict([('strarray', 'aye')]),
+                OrderedDict([('strarray', 'bee')]),
+            ])])
+        test({'$or': [{'strarray': 'aye'}, {'strarray': 'bee'}]}, want)
+
+        want = OrderedDict([
+            ('$or', [
+                OrderedDict([('array', [1, 2])]),
+                OrderedDict([('strarray', ['aye', 'bee'])]),
+            ])])
+        test({'$or': [{'array': [1, 2]}, {'strarray': ['aye', 'bee']}]}, want)
 
         # test negation
         want = OrderedDict([('$not', OrderedDict([('number', 5)]))])
