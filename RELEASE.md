@@ -1,3 +1,6 @@
+## v1.9 - Set Bugs
+* Fix bug causing set fields to be treated as single values.
+
 ## v1.8 - Query Bugs
 * Fix bug causing queries with references to break.
 * Fix internal storage bug which prevented updates from saving changes.

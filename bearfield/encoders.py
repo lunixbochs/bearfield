@@ -17,7 +17,8 @@ class BaseEncoder(object):
 
     def is_array_field(self, field):
         """Return True if a field stores an array."""
-        return isinstance(getattr(field, 'typ', None), ListType)
+        typ = getattr(field, 'typ', None)
+        return typ and hasattr(typ, 'encode_element')
 
     def encode_default(self, name, value):
         """Return a value with default encoding."""

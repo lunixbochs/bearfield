@@ -239,7 +239,9 @@ class ListType(FieldType):
 
     def encode_element(self, cls, name, value):
         """Return the encoded value for a single list element."""
-        return self.typ.encode(cls, name, value)
+        if self.typ:
+            return self.typ.encode(cls, name, value)
+        return value
 
     def encode(self, cls, name, value):
         """Return the value encoded as a list of encoded values."""
@@ -270,12 +272,18 @@ class SetType(FieldType):
         elif is_set_obj(typ):
             self.typ = FieldType.create(list(typ)[0])
 
+    def encode_element(self, cls, name, value):
+        """Return the encoded value for a single set element."""
+        if self.typ:
+            return self.typ.encode(cls, name, value)
+        return value
+
     def encode(self, cls, name, value):
-        """Return the value encoded as a list of encoded values."""
+        """Return the value encoded as a set of encoded values."""
         if self.typ is not None:
             encoded = []
             for item in value:
-                encoded.append(self.typ.encode(cls, name, item))
+                encoded.append(self.encode_element(cls, name, item))
             return encoded
         return list(value)
 
