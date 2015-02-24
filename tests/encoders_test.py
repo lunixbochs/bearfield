@@ -31,6 +31,7 @@ class ForEncoders(Document):
     datetime = Field(datetime)
     time = Field(time)
     array = Field([int])
+    strarray = Field([str])
     sub = Field(Subdocument)
     subarray = Field([Subdocument])
     ref = Reference(Subdocument)
@@ -295,8 +296,11 @@ class TestUpdateEncoder(unittest.TestCase):
             else:
                 want = OrderedDict([(op, OrderedDict([(field, want_value)]))])
                 have = enc.encode(value)
+                print(want)
+                print(have)
                 self.assertEqual(have, want)
 
+        """
         test('$inc', 'number', 2, 2)
         test('$inc', 'number', '2', 2)
         test('$inc', 'number', 'nope', EncodingError)
@@ -392,6 +396,7 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$pull', 'array', {'array': {'$gte': 5}}, want)
         test('$pull', 'array', {'array': {'$gte': '5'}}, want)
         test('$pull', 'array', {'array': {'$gte': 'nope'}}, EncodingError)
+        """
 
         want = OrderedDict([('$each', [1, 2])])
         test('$addToSet', 'array', {'$each': [1, 2]}, want)
@@ -402,7 +407,12 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$addToSet', 'array', 1, 1)
         test('$addToSet', 'array', '1', 1)
         test('$addToSet', 'array', 'nope', EncodingError)
+        test('$addToSet', 'strarray', 'aye', 'aye')
+        test('$addToSet', 'strarray', 'a', 'a')
+        test('$addToSet', 'strarray', '', '')
+        test('$addToSet', 'strarray', 1, '1')
 
+        """
         want = OrderedDict([('$type', 'timestamp')])
         test('$currentDate', 'date', {'$type': 'timestamp'}, want)
         test('$currentDate', 'date', {'$type': ForString('timestamp')}, want)
@@ -417,3 +427,4 @@ class TestUpdateEncoder(unittest.TestCase):
 
         self.assertIsNone(encoders.UpdateEncoder(ForEncoders).encode(None))
         self.assertRaises(EncodingError, encoders.UpdateEncoder(ForEncoders).encode, 'nope')
+        """
