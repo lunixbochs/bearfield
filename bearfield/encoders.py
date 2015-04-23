@@ -1,6 +1,5 @@
 """Additional data encoders."""
 from .errors import EncodingError
-from .types import ListType
 from collections import OrderedDict
 
 

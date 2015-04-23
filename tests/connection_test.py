@@ -15,9 +15,6 @@ class TestConnection(unittest.TestCase):
         con = connection.Connection(uri)
         self.assertIsNone(con._client, "client is not None prior to use")
         self.assertIsInstance(con.client, MongoClient, "client is not a MongoClient")
-        self.assertTrue(con.client.alive(), "open client is not alive")
-        con.close()
-        self.assertFalse(con.client.alive(), "closed client is alive")
 
     def test_database(self):
         """Connection.database"""
@@ -181,12 +178,10 @@ class TestFunctions(unittest.TestCase):
         try:
             connection.configure(config)
             con1 = connection.get('test1')
-            self.assertTrue(con1.client.alive(), "con1 is not alive")
             self.assertEqual(con1.prefix, "", "con1 prefix is incorrect")
             self.assertEqual(con1.database.name, "test1", "con1 database is incorrect")
 
             con2 = connection.get('test2')
-            self.assertTrue(con2.client.alive(), "con2 is not alive")
             self.assertEqual(con2.prefix, prefix2, "con2 prefix is incorrect")
             self.assertEqual(con2.database.name, "test2", "con2 database is incorrect")
 

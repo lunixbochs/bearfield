@@ -4,6 +4,7 @@ from .encoders import SortEncoder, UpdateEncoder
 from .errors import OperationError, ValidationError
 from .meta import DocumentBuilder
 from .query import Query
+from .utils import get_projection
 
 
 class Document(object):
@@ -84,7 +85,7 @@ class Document(object):
         criteria = Query(query).encode(cls, raw)
         if not raw:
             sort = SortEncoder(cls).encode(sort)
-        return cls._decode(collection.find_one(criteria, fields=fields,
+        return cls._decode(collection.find_one(criteria, projection=get_projection(fields),
                                                sort=sort, **options), fields)
 
     @classmethod
@@ -106,8 +107,8 @@ class Document(object):
         if not raw:
             sort = SortEncoder(cls).encode(sort)
             update = UpdateEncoder(cls).encode(update)
-        raw = collection.find_and_modify(criteria, update, fields=fields, new=new, sort=sort,
-                                         **options)
+        raw = collection.find_and_modify(criteria, update, projection=get_projection(fields),
+                                         new=new, sort=sort, **options)
         return cls._decode(raw, fields)
 
     @classmethod
@@ -234,8 +235,8 @@ class Document(object):
             options.pop('new', None)
             options.pop('fields', None)
             res = collection.find_and_modify(
-                {'_id': self._id}, update, fields=self._partial, multi=False, new=True, sort=sort,
-                **options)
+                {'_id': self._id}, update, projection=get_projection(self._partial), multi=False,
+                new=True, sort=sort, **options)
             self._reset(res)
             return True
         return False

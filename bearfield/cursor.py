@@ -1,5 +1,6 @@
 """Cursors for iterating over documents."""
 from .query import Query
+from .utils import get_projection
 
 
 class Cursor(object):
@@ -44,7 +45,7 @@ class Cursor(object):
         """Return the pymongo cursor which underlies this object."""
         if not getattr(self, '_pymongo_cursor', None):
             self._pymongo_cursor = self.collection.find(
-                self._criteria, fields=self.fields, **self.options)
+                self._criteria, projection=get_projection(self.fields), **self.options)
         return self._pymongo_cursor
 
     def count(self):
@@ -63,7 +64,7 @@ class Cursor(object):
 
     def __getitem__(self, index):
         """Return the document at the given index."""
-        return self.document._decode(self.pymongo[index], self.fields)
+        return self.document._decode(self.pymongo[index], get_projection(self.fields))
 
     def __iter__(self):
         """Return the cursor iterator."""

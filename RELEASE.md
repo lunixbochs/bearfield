@@ -1,3 +1,6 @@
+## v1.9.1
+* Support pymongo 3.0.x.
+
 ## v1.9 - Set Bugs
 * Fix bug causing set fields to be treated as single values.
 
