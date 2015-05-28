@@ -171,6 +171,7 @@ class Document(object):
         """
         Save the model to the database. Effectively performs an insert if the _id field is None and
         a full document update otherwise. Additional args are passed to pymongo's save().
+        Returns self for assignment.
         """
         if self._meta.disable_save:
             msg = "saves to {} are disabled".format(self.__class__.__name__)
@@ -185,6 +186,7 @@ class Document(object):
         options.pop('manipulate', None)
         self._id = collection.save(raw, manipulate=True, **options)
         self._reset(raw)
+        return self
 
     def insert(self, connection=None, **options):
         """
@@ -192,6 +194,7 @@ class Document(object):
         necessitate setting _id to None prior to calling insert. Though this could be used to
         insert the same document into multiple databases. Additional args are passed to pymongo's
         insert().
+        Returns self for assignment.
         """
         if self._meta.disable_insert:
             msg = "inserts to {} are disabled".format(self.__class__.__name__)
@@ -203,6 +206,7 @@ class Document(object):
         options.pop('manipulate', None)
         self._id = collection.insert(raw, manipulate=True, **options)
         self._reset(raw)
+        return self
 
     def update(self, update=None, connection=None, raw=None, sort=None, **options):
         """
