@@ -1,3 +1,6 @@
+## v1.9.2
+* Improve method chaining.
+
 ## v1.9.1
 * Support pymongo 3.0.x.
 
