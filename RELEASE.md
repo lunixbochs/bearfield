@@ -1,5 +1,6 @@
 ## v1.9.2
 * Improve method chaining.
+* Reference defaults to require=False to match other fields.
 
 ## v1.9.1
 * Support pymongo 3.0.x.

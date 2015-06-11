@@ -16,7 +16,7 @@ class Reference(BaseField):
     fails.
     """
 
-    def __init__(self, doctype, require=True, default=None):
+    def __init__(self, doctype, require=False, default=None):
         """
         Initialize a new reference. The reference uses a Document class to determine which
         collection to make queries against.
