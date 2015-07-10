@@ -169,6 +169,17 @@ class TestDocument(common.TestCase):
         doc.save()
         doc._meta.get_collection().remove()
 
+    def test_count(self):
+        """Document.count"""
+        WithFields(index=2, name='the second').save()
+        WithFields(index=3, name='the third').save()
+        WithFields(index=4, name='the fourth').save()
+
+        count = WithFields.count()
+        self.assertEqual(count, 3, "count() returned incorrect number of documents")
+
+        WithFields.find().remove()
+
     def test_find(self):
         """Document.find"""
         WithFields(index=2, name='the second').save()
