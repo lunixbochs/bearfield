@@ -1,3 +1,6 @@
+## v1.9.3
+* Support non-query values for $pull update operator.
+
 ## v1.9.2
 * Improve method chaining.
 * Reference defaults to require=False to match other fields.

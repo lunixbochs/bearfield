@@ -303,7 +303,7 @@ class UpdateEncoder(OperatorEncoder):
         '$addToSet': 'add',
         '$pop': 'int',
         '$pullAll': 'array',
-        '$pull': 'query',
+        '$pull': 'field_or_query',
         '$pushAll': 'array',
         '$push': 'push',
         '$bit': 'bitwise',
@@ -413,6 +413,14 @@ class UpdateEncoder(OperatorEncoder):
         if not isinstance(value, Query):
             value = Query(value)
         return value.encode(self.document)
+
+    def encode_field_or_query(self, name, value):
+        """Encode a query update value."""
+        from .query import Query
+        if isinstance(value, Query):
+            return value.encode(self.document)
+        else:
+            return QueryEncoder(self.document).encode_field(name, value)
 
     def encode_currentdate(self, name, value):
         """Encode a currentdate value."""

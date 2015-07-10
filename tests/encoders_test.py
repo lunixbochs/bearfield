@@ -1,7 +1,7 @@
 """Test encoders module."""
 import re
 import unittest
-from bearfield import Document, Field, ObjectId, Reference, encoders
+from bearfield import Document, Field, ObjectId, Query, Reference, encoders
 from bearfield.errors import EncodingError
 from collections import OrderedDict
 from datetime import date, datetime, time
@@ -418,9 +418,10 @@ class TestUpdateEncoder(unittest.TestCase):
         test('$bit', 'number', 12, EncodingError)
 
         want = OrderedDict([('intarray', OrderedDict([('$gte', 5)]))])
-        test('$pull', 'intarray', {'intarray': {'$gte': 5}}, want)
-        test('$pull', 'intarray', {'intarray': {'$gte': '5'}}, want)
-        test('$pull', 'intarray', {'intarray': {'$gte': 'nope'}}, EncodingError)
+        test('$pull', 'intarray', Query({'intarray': {'$gte': 5}}), want)
+        test('$pull', 'intarray', Query({'intarray': {'$gte': '5'}}), want)
+        test('$pull', 'intarray', Query({'intarray': {'$gte': 'nope'}}), EncodingError)
+        test('$pull', 'intarray', 5, 5)
 
         want = OrderedDict([('$each', [1, 2])])
         test('$addToSet', 'intarray', {'$each': [1, 2]}, want)
