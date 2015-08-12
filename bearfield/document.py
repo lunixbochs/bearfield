@@ -93,7 +93,7 @@ class Document(object):
                         new=None, **options):
         """
         Query the database for a document, update it, then return the old document before
-        modification. Additional args are passed to pymongo's find_and_modify().
+        modification. Additional args are passed to pymongo's find_one_and_update().
         """
         if cls._meta.disable_update:
             msg = "updates to {} are disabled".format(cls.__class__.__name__)
@@ -108,17 +108,20 @@ class Document(object):
             sort = SortEncoder(cls).encode(sort)
             update = UpdateEncoder(cls).encode(update)
         if options.get('upsert'):
+            specified_update_fields = {fieldname
+                                       for doc in update.keys()
+                                       for fieldname in update[doc]}
             defaults = {}
             for name, default in cls._meta.defaults.iteritems():
-                if default is not None:
+                if default is not None and name not in specified_update_fields:
                     if hasattr(default, '__call__'):
                         field = cls._meta.get_field(name)
                         default = field.encode(cls._meta.cls, name, default())
                     defaults[name] = default
             set_on_insert = update.get('$setOnInsert', {})
-            set_on_insert.update(defaults)
+            defaults.update(set_on_insert)
             update.update({
-                '$setOnInsert': set_on_insert
+                '$setOnInsert': defaults
             })
         raw = collection.find_one_and_update(criteria, update, projection=get_projection(fields),
                                              new=new, sort=sort, **options)

@@ -261,6 +261,30 @@ class TestDocument(common.TestCase):
         self.assertIsNotNone(doc)
         self.assertEqual(doc.index, 12)
 
+    def test_find_and_modify_upsert_do_not_clobber_set_on_insert(self):
+        doc = Defaults.find_and_modify(
+            {'name': 'a name'},
+            {
+                '$setOnInsert': {
+                    'index': 15,
+                }
+            },
+            new=True, upsert=True)
+        self.assertIsNotNone(doc)
+        self.assertEqual(doc.index, 15)
+
+    def test_find_and_modify_upsert_defaults_do_not_conflict_with_update(self):
+        doc = Defaults.find_and_modify(
+            {'name': 'a name'},
+            {
+                '$set': {
+                    'index': 20,
+                }
+            },
+            new=True, upsert=True)
+        self.assertIsNotNone(doc)
+        self.assertEqual(doc.index, 20)
+
     def test_subdocument(self):
         """Document.save/find with subdocument"""
         self.assertFalse(
@@ -294,6 +318,15 @@ class TestDocument(common.TestCase):
     def test_defaults(self):
         """Document defaults"""
         doc = Defaults()
+        self.assertEqual(doc.index, 12, "attribute value is incorrect")
+        self.assertIsNone(doc.name, "attribute value is incorrect")
+        self.assertEqual(doc.called, ['0', '1'])
+        raw = doc._encode()
+        self.assertEqual(raw.get('index'), 12, "encoded value is incorrect")
+        self.assertIsNone(raw.get('name'), "encoded value is incorrect")
+
+    def test_defaults_save(self):
+        doc = Defaults().save()
         self.assertEqual(doc.index, 12, "attribute value is incorrect")
         self.assertIsNone(doc.name, "attribute value is incorrect")
         self.assertEqual(doc.called, ['0', '1'])
