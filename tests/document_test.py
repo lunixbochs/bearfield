@@ -17,6 +17,14 @@ def create_document(base=None, **options):
     return type('CreatedDocument', (base,), attrs)
 
 
+class Defaults(document.Document):
+    class Meta:
+        connection = 'test'
+    index = Field(int, default="12")
+    name = Field(str)
+    called = Field([str], default=lambda: range(2))
+
+
 class WithFields(document.Document):
     class Meta:
         connection = 'test'
@@ -241,6 +249,18 @@ class TestDocument(common.TestCase):
                           {'index': 2}, {'$set': {'name': 'the second'}})
         doc = cls(index=3, name='the third')
 
+    def test_find_and_modify_upsert_with_defaults(self):
+        doc = Defaults.find_and_modify(
+            {'name': 'a name'},
+            {
+                '$setOnInsert': {
+                    'name': 'a new name',
+                }
+            },
+            new=True, upsert=True)
+        self.assertIsNotNone(doc)
+        self.assertEqual(doc.index, 12)
+
     def test_subdocument(self):
         """Document.save/find with subdocument"""
         self.assertFalse(
@@ -273,13 +293,6 @@ class TestDocument(common.TestCase):
 
     def test_defaults(self):
         """Document defaults"""
-        class Defaults(document.Document):
-            class Meta:
-                connection = 'test'
-            index = Field(int, default="12")
-            name = Field(str)
-            called = Field([str], default=lambda: range(2))
-
         doc = Defaults()
         self.assertEqual(doc.index, 12, "attribute value is incorrect")
         self.assertIsNone(doc.name, "attribute value is incorrect")

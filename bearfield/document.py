@@ -107,8 +107,21 @@ class Document(object):
         if not raw:
             sort = SortEncoder(cls).encode(sort)
             update = UpdateEncoder(cls).encode(update)
-        raw = collection.find_and_modify(criteria, update, projection=get_projection(fields),
-                                         new=new, sort=sort, **options)
+        if options.get('upsert'):
+            defaults = {}
+            for name, default in cls._meta.defaults.iteritems():
+                if default is not None:
+                    if hasattr(default, '__call__'):
+                        field = cls._meta.get_field(name)
+                        default = field.encode(cls._meta.cls, name, default())
+                    defaults[name] = default
+            set_on_insert = update.get('$setOnInsert', {})
+            set_on_insert.update(defaults)
+            update.update({
+                '$setOnInsert': set_on_insert
+            })
+        raw = collection.find_one_and_update(criteria, update, projection=get_projection(fields),
+                                             new=new, sort=sort, **options)
         return cls._decode(raw, fields)
 
     @classmethod
