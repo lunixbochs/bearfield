@@ -325,6 +325,15 @@ class TestDocument(common.TestCase):
         self.assertEqual(raw.get('index'), 12, "encoded value is incorrect")
         self.assertIsNone(raw.get('name'), "encoded value is incorrect")
 
+    def test_defaults_save(self):
+        doc = Defaults().save()
+        self.assertEqual(doc.index, 12, "attribute value is incorrect")
+        self.assertIsNone(doc.name, "attribute value is incorrect")
+        self.assertEqual(doc.called, ['0', '1'])
+        raw = doc._encode()
+        self.assertEqual(raw.get('index'), 12, "encoded value is incorrect")
+        self.assertIsNone(raw.get('name'), "encoded value is incorrect")
+
     def test_modifier(self):
         """Field modifiers""" 
         now = datetime.now()
