@@ -273,6 +273,18 @@ class TestDocument(common.TestCase):
         self.assertIsNotNone(doc)
         self.assertEqual(doc.index, 15)
 
+    def test_find_and_modify_upsert_defaults_do_not_conflict_with_update(self):
+        doc = Defaults.find_and_modify(
+            {'name': 'a name'},
+            {
+                '$set': {
+                    'index': 20,
+                }
+            },
+            new=True, upsert=True)
+        self.assertIsNotNone(doc)
+        self.assertEqual(doc.index, 20)
+
     def test_subdocument(self):
         """Document.save/find with subdocument"""
         self.assertFalse(
