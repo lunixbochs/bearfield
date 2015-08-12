@@ -18,7 +18,7 @@ setup_requires = [
 
 setup(
     name='bearfield',
-    version='1.9.3',
+    version='1.9.4',
     description="Small MongoDB object layer.",
     long_description=readme,
     classifiers=[
