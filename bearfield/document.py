@@ -116,9 +116,9 @@ class Document(object):
                         default = field.encode(cls._meta.cls, name, default())
                     defaults[name] = default
             set_on_insert = update.get('$setOnInsert', {})
-            set_on_insert.update(defaults)
+            defaults.update(set_on_insert)
             update.update({
-                '$setOnInsert': set_on_insert
+                '$setOnInsert': defaults
             })
         raw = collection.find_one_and_update(criteria, update, projection=get_projection(fields),
                                              new=new, sort=sort, **options)

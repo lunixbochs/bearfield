@@ -261,6 +261,18 @@ class TestDocument(common.TestCase):
         self.assertIsNotNone(doc)
         self.assertEqual(doc.index, 12)
 
+    def test_find_and_modify_upsert_do_not_clobber_set_on_insert(self):
+        doc = Defaults.find_and_modify(
+            {'name': 'a name'},
+            {
+                '$setOnInsert': {
+                    'index': 15,
+                }
+            },
+            new=True, upsert=True)
+        self.assertIsNotNone(doc)
+        self.assertEqual(doc.index, 15)
+
     def test_subdocument(self):
         """Document.save/find with subdocument"""
         self.assertFalse(
