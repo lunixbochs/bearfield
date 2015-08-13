@@ -1,3 +1,7 @@
+## v1.9.5
+* Fix field clobbering in find_and_modify.
++ Extend tests over more default value cases.
+
 ## v1.9.4
 * Fix insertion of default values on upsert with find_and_modify.
 * Use pymongo find_one_and_update behind the scenes.
