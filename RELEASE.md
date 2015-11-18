@@ -1,3 +1,6 @@
+## v1.9.6
+* Fix usage of __init__ in documents.
+
 ## v1.9.5
 * Fix field clobbering in find_and_modify.
 + Extend tests over more default value cases.

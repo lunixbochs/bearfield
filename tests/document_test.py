@@ -531,11 +531,27 @@ class TestInheritedDocument(common.TestCase):
             name = Field(str)
 
         class MultiChild(Parent1, Parent2):
-            class MetA:
+            class Meta:
                 connection = 'test'
             name = Field(str)
+
+        class InitChild(Parent1):
+            class Meta:
+                connection = 'test'
+            name = Field(str)
+            value = Field(str)
+
+            def __init__(self, *args, **kwargs):
+                super(InitChild, self).__init__(*args, **kwargs)
+                self.value = "value of " + self.name
 
         self.assertEqual(set(Parent1._meta.fields.keys()), {'_id', 'index'})
         self.assertEqual(set(Parent2._meta.fields.keys()), {'_id', 'type'})
         self.assertEqual(set(SingleChild._meta.fields.keys()), {'_id', 'index', 'name'})
         self.assertEqual(set(MultiChild._meta.fields.keys()), {'_id', 'index', 'name', 'type'})
+        self.assertEqual(set(InitChild._meta.fields.keys()), {'_id', 'index', 'name', 'value'})
+
+        name = 'child'
+        value = 'value of ' + name
+        init_child = InitChild._decode(raw={'name': name})
+        self.assertEqual(init_child.value, value)

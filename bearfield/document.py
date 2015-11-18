@@ -24,6 +24,15 @@ class Document(object):
     """
     __metaclass__ = DocumentBuilder
 
+    def __new__(cls, *args, **kwargs):
+        """Create new instance of Document."""
+        doc = object.__new__(cls, *args, **kwargs)
+        doc._raw = {}
+        doc._attrs = {}
+        doc._dirty = set()
+        doc._partial = None
+        return doc
+
     @classmethod
     def _decode(cls, raw, fields=None):
         """
@@ -32,9 +41,10 @@ class Document(object):
         """
         if raw is None:
             return None
-        doc = cls()
+        doc = cls.__new__(cls)
         doc._raw = raw.copy()
         doc._partial = cls._meta.get_partial(fields)
+        doc.__init__()
         return doc
 
     @classmethod

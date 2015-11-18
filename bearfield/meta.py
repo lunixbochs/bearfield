@@ -51,15 +51,14 @@ class DocumentMeta(object):
             parent = parent.parent
 
         def __init__(self, *args, **kwargs):
-            self._raw = {}
-            for name, default in meta.defaults.iteritems():
-                if hasattr(default, '__call__'):
-                    field = self._meta.get_field(name)
-                    default = field.encode(meta.cls, name, default())
-                self._raw[name] = default
-            self._attrs = {}
-            self._dirty = set()
-            self._partial = None
+            if not self._partial:
+                for name, default in meta.defaults.iteritems():
+                    if name in self._raw:
+                        continue
+                    if hasattr(default, '__call__'):
+                        field = self._meta.get_field(name)
+                        default = field.encode(meta.cls, name, default())
+                    self._raw[name] = default
             return parent(self, *args, **kwargs)
 
         __init__.name = parent.__name__
