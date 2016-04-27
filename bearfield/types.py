@@ -136,6 +136,8 @@ class BuiltinType(FieldType):
 
     def encode(self, cls, name, value):
         """Return the encoded value."""
+        if value is None:
+            return value
         try:
             return self.builtin(value)
         except (TypeError, ValueError):
