@@ -102,8 +102,10 @@ class Document(object):
     def find_and_modify(cls, query, update, fields=None, connection=None, raw=None, sort=None,
                         new=None, **options):
         """
-        Query the database for a document, update it, then return the old document before
-        modification. Additional args are passed to pymongo's find_one_and_update().
+        Query the database for a document and update it. If new is true, returns the modified
+        document, otherwise returns the original document. Additional args are passed to pymongo's
+        find_one_and_update() and include:
+            upsert: When true, if no documents match, a new document is created.
         """
         if cls._meta.disable_update:
             msg = "updates to {} are disabled".format(cls.__class__.__name__)
