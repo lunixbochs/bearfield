@@ -1,8 +1,10 @@
 """Tests for the connection module."""
+from __future__ import absolute_import
 import unittest
 from bearfield import connection, errors
 from pymongo import MongoClient
 from pymongo.errors import AutoReconnect
+import six
 
 uri = 'mongodb://localhost/test'
 
@@ -190,5 +192,5 @@ class TestFunctions(unittest.TestCase):
             self.assertRaises(
                 errors.ConfigError, connection.configure, {'broken': {'uri': ''}})
         finally:
-            for name, con in connection.connections.iteritems():
+            for name, con in six.iteritems(connection.connections):
                 con.close()

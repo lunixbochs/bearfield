@@ -1,10 +1,12 @@
 """Code for managing references."""
+from __future__ import absolute_import
 from .document import Document
 from .errors import EncodingError
 from .field import BaseField
 from .query import Query
 from bson import ObjectId
 from bson.errors import InvalidId
+import six
 
 
 class Reference(BaseField):
@@ -36,7 +38,7 @@ class Reference(BaseField):
         """
         from .document import Document
         if value is not None:
-            if isinstance(value, basestring):
+            if isinstance(value, six.string_types):
                 try:
                     value = ObjectId(value)
                 except InvalidId:

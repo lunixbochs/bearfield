@@ -1,9 +1,11 @@
 """Meta functionality used for document creation."""
+from __future__ import absolute_import
 from .connection import Connection, get as get_connection
 from .errors import OperationError
 from .field import BaseField, Field
 from bson import ObjectId
-from utils import to_snake_case
+from .utils import to_snake_case
+import six
 
 
 class DocumentMeta(object):
@@ -52,7 +54,7 @@ class DocumentMeta(object):
 
         def __init__(self, *args, **kwargs):
             if not self._partial:
-                for name, default in meta.defaults.iteritems():
+                for name, default in six.iteritems(meta.defaults):
                     if name in self._raw:
                         continue
                     if hasattr(default, '__call__'):

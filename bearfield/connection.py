@@ -1,8 +1,10 @@
 """Configure active databases."""
+from __future__ import absolute_import
 from .errors import ConfigError
 from pymongo import MongoClient
 from pymongo.errors import AutoReconnect
 from time import sleep
+import six
 
 connections = {}
 
@@ -131,5 +133,5 @@ def configure(config):
     prefix collection names. Remaining options are passed as keyword args to pymongo's
     MongoClient.
     """
-    for name, options in config.iteritems():
+    for name, options in six.iteritems(config):
         add(name, options)

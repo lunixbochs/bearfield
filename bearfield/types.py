@@ -1,7 +1,9 @@
 """Define field types that may be encoded and/or decoded."""
+from __future__ import absolute_import
 from collections import OrderedDict
 from datetime import date, datetime, time
-from errors import EncodingError
+from .errors import EncodingError
+import six
 
 epoch = date(1970, 1, 1)
 registered_field_types = []
@@ -130,8 +132,8 @@ class BuiltinType(FieldType):
 
     def __init__(self, builtin):
         """Create a field type using the given builtin type."""
-        if isinstance(builtin, type) and issubclass(builtin, basestring):
-            builtin = unicode
+        if isinstance(builtin, type) and issubclass(builtin, six.string_types):
+            builtin = six.text_type
         self.builtin = builtin
 
     def encode(self, cls, name, value):
@@ -307,13 +309,13 @@ class DictType(FieldType):
         if is_dict_type(typ) or is_dict_obj(typ) and len(typ) == 0:
             self.typ = None
         elif is_dict_obj(typ):
-            self.typ = FieldType.create(typ.values()[0])
+            self.typ = FieldType.create(list(typ.values())[0])
 
     def encode(self, cls, name, value):
         """Return the value encoded as a dict of encoded values."""
         if self.typ is not None:
             encoded = OrderedDict()
-            for key, item in value.iteritems():
+            for key, item in six.iteritems(value):
                 encoded[str(key)] = self.typ.encode(cls, name, item)
             return encoded
         return OrderedDict(value)
@@ -322,7 +324,7 @@ class DictType(FieldType):
         """Return the value decoded as a list of decoded values."""
         if self.typ is not None:
             decoded = OrderedDict()
-            for key, item in value.iteritems():
+            for key, item in six.iteritems(value):
                 decoded[key] = self.typ.decode(cls, name, item)
             return decoded
         return OrderedDict(value)

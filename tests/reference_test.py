@@ -1,5 +1,6 @@
 """Tests for the reference module."""
-import common
+from __future__ import absolute_import
+from . import common
 from bearfield import Document, Field, Query, reference
 from bearfield.cursor import Cursor
 from collections import OrderedDict

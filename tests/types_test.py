@@ -1,8 +1,10 @@
 """Tests for the types module."""
+from __future__ import absolute_import
 import unittest
 from bearfield import errors, types, Document, Field
 from collections import OrderedDict
 from datetime import date, datetime, time
+import six
 
 
 class ExampleType(types.FieldType):
@@ -109,7 +111,7 @@ class TestBuiltinType(unittest.TestCase):
         """BuiltinType.encode"""
         typ = types.BuiltinType(str)
         value = typ.encode('test', 'test', 12)
-        self.assertIsInstance(value, unicode, "returned value is not unicode")
+        self.assertIsInstance(value, six.text_type, "returned value is not unicode")
         self.assertEqual(value, '12', "returned unicode value is incorrect")
 
         typ = types.BuiltinType(int)
@@ -122,7 +124,7 @@ class TestBuiltinType(unittest.TestCase):
         """BuiltinType.decode"""
         typ = types.BuiltinType(str)
         value = typ.decode('test', 'test', u'test')
-        self.assertIsInstance(value, unicode, "returned value is not unicode")
+        self.assertIsInstance(value, six.text_type, "returned value is not unicode")
         self.assertEqual(value, u'test', "returnd string value is incorrect")
 
 
@@ -275,7 +277,7 @@ class TestListType(unittest.TestCase):
         field = Field([str])
         self.assertIsInstance(field.typ, types.ListType)
         self.assertIsInstance(field.typ.typ, types.BuiltinType)
-        self.assertEqual(field.typ.typ.builtin, unicode)
+        self.assertEqual(field.typ.typ.builtin, six.text_type)
 
     def test_encode(self):
         """ListType.encode"""

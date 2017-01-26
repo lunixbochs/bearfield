@@ -1,7 +1,9 @@
 """Test document module."""
-import common
+from __future__ import absolute_import
+from . import common
 from bearfield import Field, Q, Reference, document, errors, types
 from datetime import datetime
+from six.moves import range
 
 
 def create_document(base=None, **options):
@@ -22,7 +24,7 @@ class Defaults(document.Document):
         connection = 'test'
     index = Field(int, default="12")
     name = Field(str)
-    called = Field([str], default=lambda: range(2))
+    called = Field([str], default=lambda: list(range(2)))
 
 
 class WithFields(document.Document):
@@ -440,13 +442,13 @@ class TestPartialDocument(common.TestCase):
     def test_save(self):
         """Document.save (partial)"""
         raw = {'index': 1, 'name': 'the first'}
-        doc = Partial._decode(raw, raw.keys())
+        doc = Partial._decode(raw, list(raw.keys()))
         self.assertRaises(errors.OperationError, doc.save)
 
     def test_insert(self):
         """Document.insert (partial)"""
         raw = {'index': 1, 'name': 'the first'}
-        doc = Partial._decode(raw, raw.keys())
+        doc = Partial._decode(raw, list(raw.keys()))
         doc.insert()
         _id = doc._id
 
@@ -459,7 +461,7 @@ class TestPartialDocument(common.TestCase):
     def test_update(self):
         """Document.update (partial)"""
         raw = {'index': 1, 'name': 'the last'}
-        doc = Partial._decode(raw, raw.keys())
+        doc = Partial._decode(raw, list(raw.keys()))
         doc.insert()
         doc.name = 'the first'
         doc.update()

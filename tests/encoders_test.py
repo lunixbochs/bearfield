@@ -1,4 +1,5 @@
 """Test encoders module."""
+from __future__ import absolute_import
 import re
 import unittest
 from bearfield import Document, Field, ObjectId, Query, Reference, encoders
