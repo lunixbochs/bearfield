@@ -23,11 +23,6 @@ class TestCase(unittest.TestCase):
             return None
         return connection.connections[keys[0]]
 
-    @property
-    def connections(self):
-        """Return a dictionary of configured connections."""
-        return list(connection.connections.items())
-
     def tearDown(self):
         """Delete databases and close connections."""
         for con in connection.connections.values():
