@@ -1,5 +1,6 @@
 """Tests for the cursor module."""
-import common
+from __future__ import absolute_import
+from . import common
 from bearfield import cursor, Document, Field, Query
 
 

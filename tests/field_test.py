@@ -1,4 +1,5 @@
 """Tests for the field module."""
+from __future__ import absolute_import
 import unittest
 from datetime import date, datetime, time
 from bearfield import document, errors

@@ -1,4 +1,5 @@
 """Query tools."""
+from __future__ import absolute_import
 from .encoders import QueryEncoder
 from collections import OrderedDict
 from copy import deepcopy

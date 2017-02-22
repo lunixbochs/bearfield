@@ -1,7 +1,9 @@
 """Common test utilities."""
+from __future__ import absolute_import
 import unittest
 from bearfield import connection, document
 from pymongo.collection import Collection
+import six
 
 
 class TestCase(unittest.TestCase):
@@ -11,7 +13,7 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         """Create database connections."""
         connection.configure(self.config)
-        self.con = connection.connections.values()[0]
+        self.con = list(connection.connections.values())[0]
 
     @property
     def connection(self):
@@ -20,11 +22,6 @@ class TestCase(unittest.TestCase):
         if not keys:
             return None
         return connection.connections[keys[0]]
-
-    @property
-    def connections(self):
-        """Return a dictionary of configured connections."""
-        return connection.connections.items()
 
     def tearDown(self):
         """Delete databases and close connections."""
@@ -36,7 +33,7 @@ class TestCase(unittest.TestCase):
         """Remove collection contents."""
         if isinstance(collection, document.Document):
             collection = document.Document._meta.collection
-        if isinstance(collection, basestring):
+        if isinstance(collection, six.string_types):
             for con in connection.connections.values():
                 con.database[collection].remove()
         elif isinstance(collection, Collection):

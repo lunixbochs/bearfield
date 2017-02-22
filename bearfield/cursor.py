@@ -73,11 +73,13 @@ class Cursor(object):
     def __len__(self):
         return self.pymongo.count()
 
-    def next(self):
+    def __next__(self):
         """Return the next item in the iterator."""
         def decode_next():
-            return self.document._decode(self.pymongo.next(), self.fields)
+            return self.document._decode(next(self.pymongo), self.fields)
         return self.connection.autoreconnect(decode_next)()
+
+    next = __next__  # Python 2 compatibility
 
     def close(self):
         """Explicitly close the cursor."""

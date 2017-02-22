@@ -1,6 +1,8 @@
 """Additional data encoders."""
+from __future__ import absolute_import
 from .errors import EncodingError
 from collections import OrderedDict
+import six
 
 
 class BaseEncoder(object):
@@ -65,7 +67,7 @@ class BaseEncoder(object):
             raise EncodingError(msg, self.document, name, value)
 
         encoded = OrderedDict()
-        for item_name, item_value in value.iteritems():
+        for item_name, item_value in six.iteritems(value):
             if item_name == 'type':
                 item_value = self.encode_str(item_name, item_value)
             elif item_name == 'coordinates':
@@ -108,11 +110,11 @@ class SortEncoder(BaseEncoder):
         try:
             value = OrderedDict(value)
             encoded = OrderedDict()
-            for field, direction in value.iteritems():
+            for field, direction in six.iteritems(value):
                 direction = self.encode_int(field, direction)
                 field = self.encode_str(field, field)
                 encoded[field] = direction
-            return encoded.items()
+            return list(encoded.items())
         except (TypeError, ValueError):
             pass
 
@@ -214,7 +216,7 @@ class QueryEncoder(OperatorEncoder):
             raise EncodingError("unable to encode geo query", self.document, name, value)
 
         encoded = OrderedDict()
-        for item_name, item_value in value.iteritems():
+        for item_name, item_value in six.iteritems(value):
             if item_name == '$geometry':
                 item_value = self.encode_geojson(item_name, item_value)
             elif item_name == '$maxDistance':
@@ -257,7 +259,7 @@ class QueryEncoder(OperatorEncoder):
     def encode_operators(self, name, value):
         """Return a value encoded as an operator dictionary."""
         encoded = OrderedDict()
-        for item_name, item_value in value.iteritems():
+        for item_name, item_value in six.iteritems(value):
             item_name = self.encode_str(name, item_name)
             if item_value is not None:
                 encode_method = self.get_encode_method(item_name)
@@ -275,7 +277,7 @@ class QueryEncoder(OperatorEncoder):
             raise EncodingError("unable to encode query", self.document, '<query>', value)
 
         encoded = OrderedDict()
-        for item_name, item_value in value.iteritems():
+        for item_name, item_value in six.iteritems(value):
             item_name = self.encode_str('<query>', item_name)
             if self.is_operator_name(item_name):
                 item_value = self.encode_operator(item_name, item_value)
@@ -373,7 +375,7 @@ class UpdateEncoder(OperatorEncoder):
         """Encode an value for adding to a set."""
         if isinstance(value, dict):
             encoded = OrderedDict()
-            for item_name, item_value in value.iteritems():
+            for item_name, item_value in six.iteritems(value):
                 if item_name == '$each':
                     encoded[item_name] = self.encode_array(name, item_value)
                 else:
@@ -391,7 +393,7 @@ class UpdateEncoder(OperatorEncoder):
         """Encode a push update value."""
         if isinstance(value, dict):
             encoded = OrderedDict()
-            for item_name, item_value in value.iteritems():
+            for item_name, item_value in six.iteritems(value):
                 if item_name == '$each':
                     encoded[item_name] = self.encode_array(name, item_value)
                 elif item_name == '$slice':
@@ -426,7 +428,7 @@ class UpdateEncoder(OperatorEncoder):
         """Encode a currentdate value."""
         if isinstance(value, dict):
             encoded = OrderedDict()
-            for item_name, item_value in value.iteritems():
+            for item_name, item_value in six.iteritems(value):
                 if item_name == '$type':
                     encoded[item_name] = self.encode_str(name, item_value)
                 else:
@@ -444,7 +446,7 @@ class UpdateEncoder(OperatorEncoder):
             raise EncodingError("unable to encode bitwise value", self.document, name, value)
 
         encoded = OrderedDict()
-        for item_name, item_value in value.iteritems():
+        for item_name, item_value in six.iteritems(value):
             encoded[str(item_name)] = self.encode_int(name, item_value)
         return encoded
 
@@ -458,10 +460,10 @@ class UpdateEncoder(OperatorEncoder):
             raise EncodingError("unable to encode update", self.document, '<update>', value=value)
 
         encoded = OrderedDict()
-        for op, values in value.iteritems():
+        for op, values in six.iteritems(value):
             encode_method = self.get_encode_method(op)
             encoded_update = OrderedDict()
-            for name, value in values.iteritems():
+            for name, value in six.iteritems(values):
                 encoded_update[name] = encode_method(name, value)
             encoded[op] = encoded_update
         return encoded

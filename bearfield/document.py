@@ -1,13 +1,15 @@
 """Document and subdocument classes."""
+from __future__ import absolute_import
 from .cursor import Cursor
 from .encoders import SortEncoder, UpdateEncoder
 from .errors import OperationError, ValidationError
 from .meta import DocumentBuilder
 from .query import Query
 from .utils import get_projection
+import six
 
 
-class Document(object):
+class Document(six.with_metaclass(DocumentBuilder, object)):
     """
     A document or subdocument. Document properties are defined in an optional Meta subclass. In
     order for a document to be saved to a database it must associate itself with a named connection
@@ -22,11 +24,10 @@ class Document(object):
     A document may be provided as the type to a Field. This will cause that field to be treated as
     a subdocument.
     """
-    __metaclass__ = DocumentBuilder
 
     def __new__(cls, *args, **kwargs):
         """Create new instance of Document."""
-        doc = object.__new__(cls, *args, **kwargs)
+        doc = object.__new__(cls)
         doc._raw = {}
         doc._attrs = {}
         doc._dirty = set()
@@ -56,7 +57,7 @@ class Document(object):
         if update:
             raw = raw.get('$set', {})
         required = []
-        for name, field in cls._meta.get_fields(partial).iteritems():
+        for name, field in six.iteritems(cls._meta.get_fields(partial)):
             value = raw.get(name)
             if value is None:
                 if field.require:
@@ -124,7 +125,7 @@ class Document(object):
                                        for doc in update.keys()
                                        for fieldname in update[doc]}
             defaults = {}
-            for name, default in cls._meta.defaults.iteritems():
+            for name, default in six.iteritems(cls._meta.defaults):
                 if default is not None and name not in specified_update_fields:
                     if hasattr(default, '__call__'):
                         field = cls._meta.get_field(name)
@@ -147,7 +148,7 @@ class Document(object):
 
     def __init__(self, *args, **kwargs):
         """Initialize the document with values."""
-        for name, value in kwargs.iteritems():
+        for name, value in six.iteritems(kwargs):
             setattr(self, name, value)
 
     def _encode(self, update=False):
@@ -163,7 +164,7 @@ class Document(object):
         if update:
             sets = {}
             unsets = {}
-            for name, field in self._meta.get_fields(self._partial).iteritems():
+            for name, field in six.iteritems(self._meta.get_fields(self._partial)):
                 modify(name, field)
                 if name not in self._dirty:
                     continue
@@ -177,7 +178,7 @@ class Document(object):
             if unsets:
                 raw['$unset'] = unsets
         else:
-            for name, field in self._meta.get_fields(self._partial).iteritems():
+            for name, field in six.iteritems(self._meta.get_fields(self._partial)):
                 modify(name, field)
                 if name in self._attrs:
                     value = self._attrs[name]
