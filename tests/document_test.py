@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from . import common
 from bearfield import Field, Q, Reference, document, errors, types
 from datetime import datetime
+from pymongo import IndexModel, ASCENDING, DESCENDING
 from six.moves import range
 
 
@@ -75,6 +76,18 @@ class WithReference(document.Document):
     index = Field(int)
     sub = Field(SubDocument)
     ref = Reference(SubDocument)
+
+
+class WithIndexes(document.Document):
+    class Meta:
+        connection = 'test'
+        indexes = [
+            IndexModel('index'),
+            IndexModel([('index', ASCENDING),
+                        ('name', DESCENDING)]),
+        ]
+    index = Field(int)
+    name = Field(str)
 
 
 class TestDocument(common.TestCase):
@@ -434,6 +447,11 @@ class TestDocument(common.TestCase):
         test('sub.index', Field(int))
         test('ref', Reference(SubDocument))
         test('ref.index', None)
+
+    def test_create_indexes(self):
+        """Document.create_indexes()"""
+        response = WithIndexes.create_indexes()
+        self.assertEqual(len(response), len(WithIndexes._meta.indexes))
 
 
 class TestPartialDocument(common.TestCase):
