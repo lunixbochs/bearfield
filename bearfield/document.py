@@ -196,6 +196,10 @@ class Document(six.with_metaclass(DocumentBuilder, object)):
         self._attrs = {}
         self._dirty = set()
 
+    def __repr__(self):
+        attrs = ['{}={}'.format(name, repr(value)) for name, value in self._encode().items()]
+        return '{}({})'.format(self.__class__.__name__, ', '.join(attrs))
+
     def save(self, connection=None, **options):
         """
         Save the model to the database. Effectively performs an insert if the _id field is None and
