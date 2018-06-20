@@ -76,5 +76,8 @@ class Query(object):
             return self.criteria == query.criteria
         return False
 
+    def __repr__(self):
+        return 'Q({})'.format(dict(self.criteria))
+
 
 Q = Query
