@@ -3,8 +3,9 @@ from __future__ import absolute_import
 from .connection import Connection, get as get_connection
 from .errors import OperationError
 from .field import BaseField, Field
-from bson import ObjectId
 from .utils import to_snake_case
+from bson import ObjectId
+import pymongo
 import six
 
 
@@ -35,6 +36,7 @@ class DocumentMeta(object):
             self.options.update(vars(meta))
 
         self.connection = self.options.pop('connection', None)
+        self.indexes = self.options.pop('indexes', [])
         self.collection = self.options.pop('collection', None)
         if not self.collection:
             self.collection = to_snake_case(cls.__name__)

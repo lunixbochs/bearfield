@@ -71,6 +71,20 @@ class Document(six.with_metaclass(DocumentBuilder, object)):
             raise ValidationError("{} is missing required fields: {}".format(doc, required))
 
     @classmethod
+    def create_indexes(cls, connection=None, indexes=None, **kwargs):
+        """
+        Create all indexes from this document's Meta, or  on the collection.
+        Indexes must be a list of pymongo.IndexModel().
+        Be careful about calling this for large collections.
+        """
+        if indexes is None:
+            indexes = cls._meta.indexes
+        if not indexes:
+            return
+        collection = cls._meta.get_collection(connection)
+        return collection.create_indexes(indexes, **kwargs)
+
+    @classmethod
     def find(cls, query=None, fields=None, connection=None, raw=None, sort=None, **options):
         """
         Query the database for documents. Return a cursor for further refining or iterating over
